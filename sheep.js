@@ -1,18 +1,97 @@
 class Sheep {
 
 //dir is an angle 0 to 360
-constructor(x,y, dir){
+constructor(x,y, size){
+  this.perception = 20;
+  this.max_speed = 10;
+  this.max_steering = 1;
+  this.max_steering_angle = 45;
+  this.speed = 1;
+
   this.pos = createVector(x, y);
-  this.alpha = dir;
-  this.fwd = createVector(1, 0);
-  this.w = 100; //width
-  this.h = 50; //height
+  this.fwd = p5.Vector.random2D().normalize();
+  this.w = 100 * size; //body width
+  this.h = 50 * size; //body height
+  this.c = 30 * size; //head size
 }
 
-getForward(){
-  var v = this.fwd.copy();
-  v.rotate(this.alpha);
-  return v;
+getRotation(){
+    var a = atan2(this.fwd.x, this.fwd.y);
+    return -a+90;
+}
+
+setWolfPosition(x, y){
+  this.wolf = createVector(x, y);
+}
+
+
+//SEERING METHODS
+
+
+
+align(sheeps){
+  let avg_fwd = createVector();
+  let avg_speed = 0;
+
+  for(let other of sheeps){
+    if(other == this) continue;
+    avg_fwd.add(other.fwd);
+    avg_speed += other.speed;
+  }
+
+    return avg_fwd.mult(avg_speed).div(sheeps.length);
+}
+
+flee(from){
+
+  let v = p5.Vector.sub(this.pos, from);
+  v.limit(this.perception-0.5); //add boundary error because p5 sucks
+  //// TODO: make this function better so the sheep is going to go max speed
+  //for example 2 units befor mag() == 0
+  let s = this.max_speed * (this.perception - v.mag()) / this.perception;
+
+  return v.normalize().mult(s);
+}
+
+steer(desired){
+  this.speed = constrain(this.speed+desired.mag(), 0, this.max_speed);
+  let t = p5.Vector.sub(desired, this.fwd * this.speed).normalize();
+
+  if(t.mag() == 0) return;
+
+  this.fwd = t;
+}
+
+// BEHAVIOUR
+
+behaviour(sheeps){
+
+  //// TODO: add speed fdamping
+
+let desired = this.flee(this.wolf);
+desired.add(  this.align(sheeps));
+
+this.steer(desired);
+
+this.pos = p5.Vector.add(this.pos, p5.Vector.mult(this.fwd, this.speed));
+
+console.log("SPEED:"+this.speed);
+}
+
+//DRAW METHODS
+
+drawBody(w, h){
+  fill(60);
+  noStroke();
+  rectMode(CENTER);
+  rect(0, 0, w, h);
+}
+
+drawHead(f, w, s){
+  fill(120);
+  ellipseMode(CENTER);
+  f.mult(w/3);
+  circle(f.x, f.y, s);
 }
 
 draw(alpha){
@@ -20,18 +99,10 @@ draw(alpha){
   push();
 
   translate(this.pos.x, this.pos.y);
-  rotate(this.alpha);
+  rotate(this.getRotation());
 
-  fill(60);
-  noStroke();
-  rectMode(CENTER);
-  rect(0, 0, this.w, this.h);
-
-  fill(120);
-  ellipseMode(CENTER);
-  var f = this.fwd.copy();
-  f.mult(this.w/2);
-  circle(f.x, f.y, 30)
+  this.drawBody(this.w, this.h);
+  this.drawHead(createVector(1,0), this.w, this.c);
 
   pop();
 }
