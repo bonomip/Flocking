@@ -2,8 +2,8 @@ class Sheep {
 
 //dir is an angle 0 to 360
 constructor(x,y, size){
-  this.perception = 400;
-  this.max_speed = 10;
+  this.perception = 100;
+  this.max_speed = 20;
   this.speed = 0;
   this.drag = 0.1;
   this.acc = createVector(0,0);
@@ -45,6 +45,10 @@ vel(){
   return this.mult(this.fwd, this.speed);
 }
 
+dist(v, w){
+  return p5.Vector.dist(v, w);
+}
+
 setVel(vel){
   let m = vel.mag();
 
@@ -63,32 +67,53 @@ setVel(vel){
 
 
 align(sheeps){
-  let avg_fwd = createVector();
-  let avg_speed = 0;
 
+  //TODO two major problems:
+    //1 - sheeps that are idle do not start moving accordinly to the others
+    //2 - sheeps that are moving are not going to stop ever.
+
+  let avg_vel = createVector();
+  let n = 0;
   for(let other of sheeps){
-    if(other == this) continue;
-    avg_fwd.add(other.fwd);
-    avg_speed += other.speed;
+    let d = this.dist(other.pos, this.pos);
+    if(other != this &&  d < this.perception)
+    {
+      avg_vel.add(other.vel());
+      n++;
+    }
   }
 
-    return avg_fwd.mult(avg_speed).div(sheeps.length);
+  if(n == 0)
+    return avg_vel;
+
+  return avg_vel.div(n);
 }
 
 flee(from){
 
-  let v = this.sub(this.pos, from);
-  v.limit(this.perception-0.1); //add boundary error because p5 sucks
+  let vel = createVector(0,0);
+
+  let d = this.dist(this.pos, from);
+
+  if(d >= this.perception) return vel;
+
+  vel = this.sub(this.pos, from);
+  let x = vel.mag();
+  let s = (this.perception - x)/this.perception*this.max_speed;
+
+
 
   //// TODO: make this function better so the sheep is going to go max speed
   //for example 2 units befor mag() == 0
-  let s = this.max_speed * (this.perception - v.mag()) / this.perception;
+  //let s = this.max_speed * (this.perception - v.mag()) / this.perception;
 
-  return v.normalize().mult(s);
+  return vel.normalize().mult(s);
 }
 
 steer(desired){
-  //this.speed = constrain(this.speed+desired.mag(), 0, this.max_speed);
+
+  //// TODO: smooth steering when sheep is stop and than suddently start
+  // there's too much inconsistency and the cange of fwd is too hard.
 
   let force = this.sub(desired, this.vel());
   let drag_force = this.mult(this.mult(this.vel(), this.vel()), this.drag*0.5);
@@ -103,12 +128,14 @@ steer(desired){
 
 behaviour(sheeps){
 
-  //// TODO: add speed fdamping
+let desired = createVector(0,0);
 
-let desired = this.flee(this.wolf);
-//desired.add(  this.align(sheeps));
+desired.add(this.flee(this.wolf));
+desired.add(this.align(sheeps));
 
-this.steer(desired);
+
+
+this.steer(desired.div(2));
 
 this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
 
@@ -122,10 +149,16 @@ drawBody(w, h){
   noStroke();
   rectMode(CENTER);
   rect(0, 0, w, h);
+
+  noFill();
+  stroke(2550, 0, 0);
+  circle(0, 0, this.perception*2);
+  
 }
 
 drawHead(f, w, s){
   fill(120);
+  noStroke();
   ellipseMode(CENTER);
   f.mult(w/3);
   circle(f.x, f.y, s);

@@ -6,11 +6,13 @@ function setup() {
 
 frameRate(30);
 
-	let c = 2;
+	let c = 3;
+	let w = width/2;
+	let h = height/2;
 
-	for(let i = 1; i < c; i++){
-		for(let j = 1; j < c; j++){
-			sheeps.push(new Sheep(width/c * i, height/c *j, 1));
+	for(let i = 0; i < c; i++){
+		for(let j = 0; j < c; j++){
+			sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.2));
 		}
 	}
 
