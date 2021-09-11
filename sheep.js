@@ -4,10 +4,10 @@ class Sheep {
 constructor(x,y, size){
   this.perception = 400;
   this.max_speed = 10;
-  this.max_steering = 1;
-  this.max_steering_angle = 45;
-  this.speed = 1;
-  this.drag = 0.05;
+  this.speed = 0;
+  this.drag = 0.1;
+  this.acc = createVector(0,0);
+  this.dt_factor = 0.05;
 
   this.pos = createVector(x, y);
   this.fwd = p5.Vector.random2D().normalize();
@@ -23,6 +23,38 @@ getRotation(){
 
 setWolfPosition(x, y){
   this.wolf = createVector(x, y);
+}
+
+mult(v, w){
+  return p5.Vector.mult(v, w);
+}
+
+div(v, w){
+  return p5.Vector.div(v,w);
+}
+
+add(v, w){
+  return p5.Vector.add(v, w);
+}
+
+sub(v, w){
+  return p5.Vector.sub(v, w);
+}
+
+vel(){
+  return this.mult(this.fwd, this.speed);
+}
+
+setVel(vel){
+  let m = vel.mag();
+
+  if(m < 0.01){
+    this.speed = 0;
+    return;
+  }
+
+  this.speed = constrain(m, 0, this.max_speed);
+  this.fwd = vel.normalize();
 }
 
 
@@ -45,7 +77,7 @@ align(sheeps){
 
 flee(from){
 
-  let v = p5.Vector.sub(this.pos, from);
+  let v = this.sub(this.pos, from);
   v.limit(this.perception-0.1); //add boundary error because p5 sucks
 
   //// TODO: make this function better so the sheep is going to go max speed
@@ -58,16 +90,13 @@ flee(from){
 steer(desired){
   //this.speed = constrain(this.speed+desired.mag(), 0, this.max_speed);
 
-  let t = p5.Vector.sub(desired, this.fwd * this.speed);
-  let s = constrain(t.mag(), 0, this.max_speed);
-  let df = p5.Vector.mult(p5.Vector.mult(t,t), this.drag*0.5);
-  let r = p5.Vector.sub(t, df);
+  let force = this.sub(desired, this.vel());
+  let drag_force = this.mult(this.mult(this.vel(), this.vel()), this.drag*0.5);
+  let new_acc = this.sub(force, drag_force);
+  let new_vel = this.add(this.vel(), this.mult(this.add(this.acc, new_acc), this.dt_factor));
 
-  this.speed = r.mag();
-
-  //if(this.speed == 0) { return; }
-
-  this.fwd = r.normalize();
+  this.setVel(new_vel);
+  this.acc = new_acc;
 }
 
 // BEHAVIOUR
@@ -81,7 +110,7 @@ let desired = this.flee(this.wolf);
 
 this.steer(desired);
 
-this.pos = p5.Vector.add(this.pos, p5.Vector.mult(this.fwd, this.speed));
+this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
 
 console.log("SPEED:"+this.speed);
 }
