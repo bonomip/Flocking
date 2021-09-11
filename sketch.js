@@ -4,7 +4,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 	angleMode(DEGREES);
 
-frameRate(20);
+frameRate(1);
 
 	let c = 2;
 

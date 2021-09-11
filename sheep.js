@@ -2,11 +2,12 @@ class Sheep {
 
 //dir is an angle 0 to 360
 constructor(x,y, size){
-  this.perception = 20;
+  this.perception = 400;
   this.max_speed = 10;
   this.max_steering = 1;
   this.max_steering_angle = 45;
   this.speed = 1;
+  this.drag = 0.05;
 
   this.pos = createVector(x, y);
   this.fwd = p5.Vector.random2D().normalize();
@@ -45,7 +46,8 @@ align(sheeps){
 flee(from){
 
   let v = p5.Vector.sub(this.pos, from);
-  v.limit(this.perception-0.5); //add boundary error because p5 sucks
+  v.limit(this.perception-0.1); //add boundary error because p5 sucks
+
   //// TODO: make this function better so the sheep is going to go max speed
   //for example 2 units befor mag() == 0
   let s = this.max_speed * (this.perception - v.mag()) / this.perception;
@@ -54,12 +56,18 @@ flee(from){
 }
 
 steer(desired){
-  this.speed = constrain(this.speed+desired.mag(), 0, this.max_speed);
-  let t = p5.Vector.sub(desired, this.fwd * this.speed).normalize();
+  //this.speed = constrain(this.speed+desired.mag(), 0, this.max_speed);
 
-  if(t.mag() == 0) return;
+  let t = p5.Vector.sub(desired, this.fwd * this.speed);
+  let s = constrain(t.mag(), 0, this.max_speed);
+  let df = p5.Vector.mult(p5.Vector.mult(t,t), this.drag*0.5);
+  let r = p5.Vector.sub(t, df);
 
-  this.fwd = t;
+  this.speed = r.mag();
+
+  //if(this.speed == 0) { return; }
+
+  this.fwd = r.normalize();
 }
 
 // BEHAVIOUR
@@ -69,7 +77,7 @@ behaviour(sheeps){
   //// TODO: add speed fdamping
 
 let desired = this.flee(this.wolf);
-desired.add(  this.align(sheeps));
+//desired.add(  this.align(sheeps));
 
 this.steer(desired);
 
