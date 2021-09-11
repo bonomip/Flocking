@@ -24,6 +24,7 @@ function draw() {
 	background(255);
 
 	sheeps.forEach((item, i) => {
+		item.bounds();
 		item.setWolfPosition(mouseX, mouseY);
 		item.behaviour(sheeps);
 		item.draw();

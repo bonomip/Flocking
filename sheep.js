@@ -2,9 +2,9 @@ class Sheep {
 
 //dir is an angle 0 to 360
 constructor(x,y, size){
-  this.perception = 100;
+  this.perception = 50;
   this.min_speed = 0.05;
-  this.max_speed = 10;
+  this.max_speed = 6;
   this.speed = random(0, 5);
   this.drag = 0.1;
   this.acc = createVector(0,0);
@@ -25,6 +25,7 @@ getRotation(){
 setWolfPosition(x, y){
   this.wolf = createVector(x, y);
 }
+
 
 mult(v, w){
   return p5.Vector.mult(v, w);
@@ -50,6 +51,12 @@ dist(v, w){
   return p5.Vector.dist(v, w);
 }
 
+dot(v, w){
+  return p5.Vector.dot(v, w);
+}
+
+
+
 setVel(vel){
   let m = vel.mag();
 
@@ -65,6 +72,18 @@ setVel(vel){
 
 //SEERING METHODS
 
+bounds(){
+  if(this.pos.x > width)
+    this.pos.x = 0;
+  else if ( this.pos.x < 0 )
+    this.pos.x = width;
+
+  if(this.pos.y > height)
+    this.pos.y = 0;
+  else if ( this.pos.y < 0 )
+    this.pos.y = height;
+}
+
 cohesion(sheeps){
 
 }
@@ -74,10 +93,27 @@ align(sheeps){
 
 if(sheeps.length == 0) return avg_vel;
 
-  for(let other of sheeps)
-      avg_vel.add(other.vel());
+  let avg_speed = 0;
 
-  return avg_vel.div(sheeps.length);
+  for(let other of sheeps){
+      avg_vel.add(other.vel());
+      avg_speed += other.speed;
+    }
+
+  avg_vel.normalize();
+
+  let factor = this.dot(avg_vel, this.fwd);
+
+  //if(factor + 0.1 >= 1) { console.log("aia"); return createVector(0, 0) };
+
+  avg_speed /= sheeps.length;
+
+  avg_vel.setMag(avg_speed*0.95);
+
+  //weight the speed to apply to tavg_vel based on how much the this.fwd and avg_vel are different
+  // if this.fwd and avg_vel are a lot similar so don't apply any forces because i'm alread
+  //aligned
+  return avg_vel;
 }
 
 flee(from){
@@ -121,7 +157,7 @@ let desired = createVector(0,0);
 desired.add(this.flee(this.wolf));
 desired.add(this.align(neighbors));
 
-this.steer(desired.div(2));
+this.steer(desired);
 
 this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
 
