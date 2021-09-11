@@ -6,7 +6,7 @@ function setup() {
 
 frameRate(30);
 
-	let c = 3;
+	let c = 7;
 	let w = width/2;
 	let h = height/2;
 

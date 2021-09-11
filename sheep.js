@@ -3,8 +3,9 @@ class Sheep {
 //dir is an angle 0 to 360
 constructor(x,y, size){
   this.perception = 100;
-  this.max_speed = 20;
-  this.speed = 0;
+  this.min_speed = 0.05;
+  this.max_speed = 10;
+  this.speed = random(0, 5);
   this.drag = 0.1;
   this.acc = createVector(0,0);
   this.dt_factor = 0.05;
@@ -52,66 +53,47 @@ dist(v, w){
 setVel(vel){
   let m = vel.mag();
 
-  if(m < 0.01){
+  if(m < this.min_speed){
     this.speed = 0;
     return;
   }
 
-  this.speed = constrain(m, 0, this.max_speed);
+  this.speed = constrain(m, this.min_speed, this.max_speed);
   this.fwd = vel.normalize();
 }
 
 
 //SEERING METHODS
 
+cohesion(sheeps){
 
+}
 
 align(sheeps){
+  let avg_vel = createVector(0, 0);
 
-  //TODO two major problems:
-    //1 - sheeps that are idle do not start moving accordinly to the others
-    //2 - sheeps that are moving are not going to stop ever.
+if(sheeps.length == 0) return avg_vel;
 
-  let avg_vel = createVector();
-  let n = 0;
-  for(let other of sheeps){
-    let d = this.dist(other.pos, this.pos);
-    if(other != this &&  d < this.perception)
-    {
+  for(let other of sheeps)
       avg_vel.add(other.vel());
-      n++;
-    }
-  }
 
-  if(n == 0)
-    return avg_vel;
-
-  return avg_vel.div(n);
+  return avg_vel.div(sheeps.length);
 }
 
 flee(from){
 
   let vel = createVector(0,0);
 
-  let d = this.dist(this.pos, from);
-
-  if(d >= this.perception) return vel;
+  if(this.dist(this.pos, from) >= this.perception)
+    return vel;
 
   vel = this.sub(this.pos, from);
-  let x = vel.mag();
-  let s = (this.perception - x)/this.perception*this.max_speed;
-
-
-
-  //// TODO: make this function better so the sheep is going to go max speed
-  //for example 2 units befor mag() == 0
-  //let s = this.max_speed * (this.perception - v.mag()) / this.perception;
+  let s = (this.perception - vel.mag())/this.perception*this.max_speed;
 
   return vel.normalize().mult(s);
 }
 
 steer(desired){
-
   //// TODO: smooth steering when sheep is stop and than suddently start
   // there's too much inconsistency and the cange of fwd is too hard.
 
@@ -128,18 +110,22 @@ steer(desired){
 
 behaviour(sheeps){
 
+let neighbors = [];
+
+for(let sheep of sheeps)
+  if(sheep != this && this.perception > this.dist(sheep.pos, this.pos))
+    neighbors.push(sheep);
+
 let desired = createVector(0,0);
 
 desired.add(this.flee(this.wolf));
-desired.add(this.align(sheeps));
-
-
+desired.add(this.align(neighbors));
 
 this.steer(desired.div(2));
 
 this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
 
-console.log("SPEED:"+this.speed);
+//console.log("SPEED:"+this.speed);
 }
 
 //DRAW METHODS
@@ -153,7 +139,7 @@ drawBody(w, h){
   noFill();
   stroke(2550, 0, 0);
   circle(0, 0, this.perception*2);
-  
+
 }
 
 drawHead(f, w, s){
