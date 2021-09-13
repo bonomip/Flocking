@@ -2,14 +2,23 @@ class Sheep {
 
 //dir is an angle 0 to 360
 constructor(x,y, size){
-  this.perception = 50;
-  this.min_speed = 0.05;
-  this.max_speed = 6;
-  this.speed = random(0, 5);
-  this.drag = 0.1;
-  this.acc = createVector(0,0);
-  this.dt_factor = 0.05;
+  this.perception = 100;
+  this.wolf_perception = 200;
+  this.min_dist_sep = 20;
+  this.separation_factor = 0.4;
 
+  this.min_speed = 0.05;
+  this.max_speed = 5;
+  this.speed = random(0, 5);
+
+  this.drag = 0.1;
+  this.dt_factor = 0.05;
+  this.align_drag = 1;
+  this.cohesion_drag = 1;
+  this.separation_drag = 1;
+
+  this.acc = createVector(0,0);
+  this.desired = createVector(0, 0);
   this.pos = createVector(x, y);
   this.fwd = p5.Vector.random2D().normalize();
   this.w = 100 * size; //body width
@@ -25,7 +34,6 @@ getRotation(){
 setWolfPosition(x, y){
   this.wolf = createVector(x, y);
 }
-
 
 mult(v, w){
   return p5.Vector.mult(v, w);
@@ -55,8 +63,6 @@ dot(v, w){
   return p5.Vector.dot(v, w);
 }
 
-
-
 setVel(vel){
   let m = vel.mag();
 
@@ -69,6 +75,9 @@ setVel(vel){
   this.fwd = vel.normalize();
 }
 
+inverseForce(mag, rad, max){
+  return (rad - mag)/rad*max;
+}
 
 //SEERING METHODS
 
@@ -84,14 +93,47 @@ bounds(){
     this.pos.y = height;
 }
 
+separation(sheeps){
+  let avg_vel = createVector(0, 0);
+  let tot = 0;
+
+  for(let other of sheeps){
+    let v = this.sub(this.pos, other.pos);
+
+    if(v.mag() < 0.01){
+      avg_vel.add(p5.Vector.random2D().normalize().mult(this.max_speed));
+      tot++;
+    } else if(v.mag() <= this.min_dist_sep){
+      avg_vel.add(v.mult(this.max_speed*this.separation_factor));
+      tot++;
+    }
+
+  }
+
+  //let s = this.inverseForce(avg_vel.mag(), this.perception, this.max_speed);
+  //avg_vel.setMag(s*this.separation_drag);
+  if(tot == 0) return createVector(0,0);
+
+  return avg_vel.div(tot);
+}
+
 cohesion(sheeps){
+  let avg_pos = createVector(0, 0);
+
+  for(let other of sheeps)
+      avg_pos.add(other.pos);
+
+  avg_pos.div(sheeps.length);
+  let avg_vel = this.sub(avg_pos, this.pos);
+  let s = this.inverseForce(avg_vel.mag(), this.perception, this.max_speed);
+  avg_vel.setMag(s*this.cohesion_drag);
+
+  return avg_vel;
 
 }
 
 align(sheeps){
   let avg_vel = createVector(0, 0);
-
-if(sheeps.length == 0) return avg_vel;
 
   let avg_speed = 0;
 
@@ -108,7 +150,7 @@ if(sheeps.length == 0) return avg_vel;
 
   avg_speed /= sheeps.length;
 
-  avg_vel.setMag(avg_speed*0.95);
+  avg_vel.setMag(avg_speed*this.align_drag);
 
   //weight the speed to apply to tavg_vel based on how much the this.fwd and avg_vel are different
   // if this.fwd and avg_vel are a lot similar so don't apply any forces because i'm alread
@@ -118,13 +160,11 @@ if(sheeps.length == 0) return avg_vel;
 
 flee(from){
 
-  let vel = createVector(0,0);
+  if(this.dist(this.pos, from) >= this.wolf_perception)
+    return createVector(0,0);
 
-  if(this.dist(this.pos, from) >= this.perception)
-    return vel;
-
-  vel = this.sub(this.pos, from);
-  let s = (this.perception - vel.mag())/this.perception*this.max_speed;
+  let vel = this.sub(this.pos, from);
+  let s = this.inverseForce(vel.mag(), this.perception, this.max_speed);
 
   return vel.normalize().mult(s);
 }
@@ -132,6 +172,7 @@ flee(from){
 steer(desired){
   //// TODO: smooth steering when sheep is stop and than suddently start
   // there's too much inconsistency and the cange of fwd is too hard.
+  // ADD MAX STEERING ANGLE
 
   let force = this.sub(desired, this.vel());
   let drag_force = this.mult(this.mult(this.vel(), this.vel()), this.drag*0.5);
@@ -152,16 +193,13 @@ for(let sheep of sheeps)
   if(sheep != this && this.perception > this.dist(sheep.pos, this.pos))
     neighbors.push(sheep);
 
-let desired = createVector(0,0);
+this.desired.add(this.flee(this.wolf));
 
-desired.add(this.flee(this.wolf));
-desired.add(this.align(neighbors));
-
-this.steer(desired);
-
-this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
-
-//console.log("SPEED:"+this.speed);
+if(neighbors.length != 0) {
+  this.desired.add(this.separation(neighbors));
+  this.desired.add(this.align(neighbors));
+  this.desired.add(this.cohesion(neighbors));
+}
 }
 
 //DRAW METHODS
@@ -172,10 +210,13 @@ drawBody(w, h){
   rectMode(CENTER);
   rect(0, 0, w, h);
 
+  /*
   noFill();
-  stroke(2550, 0, 0);
+  stroke(255, 0, 0);
   circle(0, 0, this.perception*2);
-
+  stroke(0, 255, 0);
+  circle(0, 0, this.min_dist_sep);
+  */
 }
 
 drawHead(f, w, s){
@@ -187,6 +228,12 @@ drawHead(f, w, s){
 }
 
 draw(alpha){
+
+  this.steer(this.desired);
+
+  this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
+
+  this.desired = createVector(0, 0);
 
   push();
 
