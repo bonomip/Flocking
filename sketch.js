@@ -16,7 +16,7 @@ function setup() {
 
 	frameRate(30);
 
-	let c = 4;
+	let c = 2;
 	let w = width/2;
 	let h = height/2;
 
@@ -46,6 +46,7 @@ function draw() {
 
 	sheeps.forEach((item, i) => {
 		item.bounds();
+		item.step();
 		item.draw();
 	});
 

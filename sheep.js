@@ -2,30 +2,47 @@ class Sheep {
 
 //dir is an angle 0 to 360
 constructor(x,y, size){
-  this.perception = 200;
-  this.wolf_perception = 150;
+  this.global_perception = 200;
+  this.drag = 0.1;
+
+  this.align_perception = 50;
+  this.align_speed_threshold = 0.01;
+  this.align_max_steer_force = 0.5;
+  this.align_max_speed = 5; //the speed is going to be the disired vector magnitude,
+                            //higher the mag higher the angle between the velocity
+                            //and the steer vector
+                            // is also possibile to multiply the result steer vectory by a factor
+                            // to add force
+
+  this.wolf_perception = 100;
+  this.wolf_min_perception = 30;
+  this.wolf_max_steer_force = 0.5;
+  this.wolf_max_flee_speed = 5;
+
   this.min_dist_sep = 20;
   this.separation_factor = 0.4;
 
-  this.min_speed = 0.05;
-  this.max_speed = 5;
-  this.speed = random(0, 5);
+  this.max_speed = 5; // GLOBAL MAXIMUM SPEED
+  this.max_force = 5;
 
-  this.drag = 0.1;
-  this.dt_factor = 0.05;
-
-  this.acc = createVector(0,0);
-  this.desired = createVector(0, 0);
+  this.rotation = 0;
+  this.acceleration = createVector(0,0);
   this.pos = createVector(x, y);
-  this.fwd = p5.Vector.random2D().normalize();
+  this.velocity = createVector(0, 0);
+
   this.w = 100 * size; //body width
   this.h = 50 * size; //body height
   this.c = 30 * size; //head size
 }
 
 getRotation(){
-    var a = atan2(this.fwd.x, this.fwd.y);
-    return -a+90;
+    if(this.velocity.mag() == 0)
+      return this.rotation;
+
+    var a = atan2(this.velocity.x, this.velocity.y);
+    this.rotation = -a+90;
+
+    return this.rotation;
 }
 
 setWolfPosition(x, y){
@@ -48,32 +65,12 @@ sub(v, w){
   return p5.Vector.sub(v, w);
 }
 
-vel(){
-  return this.mult(this.fwd, this.speed);
-}
-
 dist(v, w){
   return p5.Vector.dist(v, w);
 }
 
 dot(v, w){
   return p5.Vector.dot(v, w);
-}
-
-setVel(vel){
-  let m = vel.mag();
-
-  if(m < this.min_speed){
-    this.speed = 0;
-    return;
-  }
-
-  this.speed = constrain(m, this.min_speed, this.max_speed);
-  this.fwd = vel.normalize();
-}
-
-inverseForce(mag, rad, max){
-  return (rad - mag)/rad*max;
 }
 
 //SEERING METHODS
@@ -130,71 +127,99 @@ cohesion(sheeps){
 }
 
 align(sheeps){
-  let avg_vel = createVector(0, 0);
+  let desired = createVector(0, 0);
 
-  let avg_speed = 0;
+  let desired_speed = 0;
+
+  let count = 0;
 
   for(let other of sheeps){
-      avg_vel.add(other.vel());
-      avg_speed += other.speed;
+      let d = this.pos.dist(other.pos);
+
+      if(other.velocity.mag() < this.align_speed_threshold || d > this.align_perception){
+        continue;
+      }
+
+      desired.add(other.velocity);
+      desired_speed += other.velocity.mag();
+      count++;
     }
 
-  avg_vel.normalize();
+  if(count == 0)
+    return createVector(0, 0);
 
-  let factor = this.dot(avg_vel, this.fwd);
+  desired_speed /= count;
 
-  avg_speed /= sheeps.length;
+  desired.div(count);
+  desired.mult(desired_speed);
+  desired.limit(this.align_max_speed);
 
-  avg_vel.setMag(avg_speed);
+  let steer = this.sub(desired, this.velocity).limit(this.align_max_steer_force);
 
-  //weight the speed to apply to tavg_vel based on how much the this.fwd and avg_vel are different
-  // if this.fwd and avg_vel are a lot similar so don't apply any forces because i'm alread
-  //aligned
-  return avg_vel;
+  return steer;
 }
 
-flee(from){
+flee(){
+  let desired = this.sub(this.pos, this.wolf);
 
-  if(this.dist(this.pos, from) >= this.wolf_perception)
+  let d = desired.mag();
+
+  desired.normalize();
+
+  if(d > this.wolf_perception)
     return createVector(0,0);
 
-  let vel = this.sub(this.pos, from);
-  let s = this.inverseForce(vel.mag(), this.wolf_perception, 100);
+  let m;
 
-  return vel.normalize().mult(s);
+  if(d < this.wolf_min_perception){
+    m = this.wolf_max_flee_speed;
+  } else {
+    m = map(d, 20, this.wolf_perception, this.wolf_max_flee_speed, 0);
+  }
+
+
+  desired.mult(m);
+
+  let steer = this.sub(desired, this.velocity).limit(this.wolf_max_steer_force);
+  return steer;
 }
 
-steer(desired){
-  //// TODO: smooth steering when sheep is stop and than suddently start
-  // there's too much inconsistency and the cange of fwd is too hard.
-  // ADD MAX STEERING ANGLE
-
-  let force = this.sub(desired, this.vel()).limit(this.max_speed);
-  let drag_force = this.mult(this.mult(this.vel(), this.vel()), this.drag*0.5);
-  let new_acc = this.sub(force, drag_force);
-  let new_vel = this.add(this.vel(), this.mult(this.add(this.acc, new_acc), this.dt_factor));
-
-  this.setVel(new_vel);
-  this.acc = new_acc;
+applyForce(force){
+  this.acceleration.add(force);
 }
 
 // BEHAVIOUR
 
 behaviour(sheeps){
 
-let neighbors = [];
+  let neighbors = [];
 
-for(let sheep of sheeps)
-  if(sheep != this && this.perception > this.dist(sheep.pos, this.pos))
-    neighbors.push(sheep);
+  for(let sheep of sheeps)
+    if(sheep != this && this.global_perception > this.dist(sheep.pos, this.pos))
+      neighbors.push(sheep);
 
-this.desired.add(this.flee(this.wolf).mult(fleeSlider.value()));
+  let fleeSteer = this.flee()
+  this.applyForce(fleeSteer.mult(fleeSlider.value()));
 
-if(neighbors.length != 0) {
-  this.desired.add(this.separation(neighbors).mult(separationSlider.value()));
-  this.desired.add(this.align(neighbors).mult(alignSlider.value()));
-  this.desired.add(this.cohesion(neighbors).mult(cohesionSlider.value()));
+  if(neighbors.length != 0)
+  {
+    //let separationSteer = this.separation(neighbors);
+    //this.applyForce(separationSteer.mult(separationSlider.value()));
+
+    let alignSteer = this.align(neighbors)
+    this.applyForce(alignSteer.mult(alignSlider.value()));
+
+    //let cohesionSteer = this.cohesion(neighbors);
+    //this.applyForce(cohesionSteer.mult(cohesionSlider.value()));
+  }
 }
+
+step(){
+  this.velocity.add(this.acceleration);
+  this.velocity.limit(this.max_speed);
+  this.velocity.mult(1-this.drag);
+  this.pos.add(this.velocity);
+  this.acceleration.mult(0);
 }
 
 //DRAW METHODS
@@ -205,13 +230,12 @@ drawBody(w, h){
   rectMode(CENTER);
   rect(0, 0, w, h);
 
-  /*
+
   noFill();
   stroke(255, 0, 0);
-  circle(0, 0, this.perception*2);
+  circle(0, 0, this.align_perception*2);
   stroke(0, 255, 0);
-  circle(0, 0, this.min_dist_sep);
-  */
+  circle(0, 0, this.wolf_perception*2);
 }
 
 drawHead(f, w, s){
@@ -223,12 +247,6 @@ drawHead(f, w, s){
 }
 
 draw(alpha){
-
-  this.steer(this.desired);
-
-  this.pos = this.add(this.pos, this.mult(this.fwd, this.speed));
-
-  this.desired = createVector(0, 0);
 
   push();
 
