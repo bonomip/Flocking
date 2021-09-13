@@ -2,8 +2,8 @@ class Sheep {
 
 //dir is an angle 0 to 360
 constructor(x,y, size){
-  this.perception = 100;
-  this.wolf_perception = 200;
+  this.perception = 200;
+  this.wolf_perception = 150;
   this.min_dist_sep = 20;
   this.separation_factor = 0.4;
 
@@ -13,9 +13,6 @@ constructor(x,y, size){
 
   this.drag = 0.1;
   this.dt_factor = 0.05;
-  this.align_drag = 1;
-  this.cohesion_drag = 1;
-  this.separation_drag = 1;
 
   this.acc = createVector(0,0);
   this.desired = createVector(0, 0);
@@ -104,7 +101,7 @@ separation(sheeps){
       avg_vel.add(p5.Vector.random2D().normalize().mult(this.max_speed));
       tot++;
     } else if(v.mag() <= this.min_dist_sep){
-      avg_vel.add(v.mult(this.max_speed*this.separation_factor));
+      avg_vel.add(v.mult(this.max_speed));
       tot++;
     }
 
@@ -126,7 +123,7 @@ cohesion(sheeps){
   avg_pos.div(sheeps.length);
   let avg_vel = this.sub(avg_pos, this.pos);
   let s = this.inverseForce(avg_vel.mag(), this.perception, this.max_speed);
-  avg_vel.setMag(s*this.cohesion_drag);
+  avg_vel.setMag(s);
 
   return avg_vel;
 
@@ -146,11 +143,9 @@ align(sheeps){
 
   let factor = this.dot(avg_vel, this.fwd);
 
-  //if(factor + 0.1 >= 1) { console.log("aia"); return createVector(0, 0) };
-
   avg_speed /= sheeps.length;
 
-  avg_vel.setMag(avg_speed*this.align_drag);
+  avg_vel.setMag(avg_speed);
 
   //weight the speed to apply to tavg_vel based on how much the this.fwd and avg_vel are different
   // if this.fwd and avg_vel are a lot similar so don't apply any forces because i'm alread
@@ -164,7 +159,7 @@ flee(from){
     return createVector(0,0);
 
   let vel = this.sub(this.pos, from);
-  let s = this.inverseForce(vel.mag(), this.perception, this.max_speed);
+  let s = this.inverseForce(vel.mag(), this.wolf_perception, 100);
 
   return vel.normalize().mult(s);
 }
@@ -174,7 +169,7 @@ steer(desired){
   // there's too much inconsistency and the cange of fwd is too hard.
   // ADD MAX STEERING ANGLE
 
-  let force = this.sub(desired, this.vel());
+  let force = this.sub(desired, this.vel()).limit(this.max_speed);
   let drag_force = this.mult(this.mult(this.vel(), this.vel()), this.drag*0.5);
   let new_acc = this.sub(force, drag_force);
   let new_vel = this.add(this.vel(), this.mult(this.add(this.acc, new_acc), this.dt_factor));
@@ -193,12 +188,12 @@ for(let sheep of sheeps)
   if(sheep != this && this.perception > this.dist(sheep.pos, this.pos))
     neighbors.push(sheep);
 
-this.desired.add(this.flee(this.wolf));
+this.desired.add(this.flee(this.wolf).mult(fleeSlider.value()));
 
 if(neighbors.length != 0) {
-  this.desired.add(this.separation(neighbors));
-  this.desired.add(this.align(neighbors));
-  this.desired.add(this.cohesion(neighbors));
+  this.desired.add(this.separation(neighbors).mult(separationSlider.value()));
+  this.desired.add(this.align(neighbors).mult(alignSlider.value()));
+  this.desired.add(this.cohesion(neighbors).mult(cohesionSlider.value()));
 }
 }
 

@@ -16,7 +16,7 @@ function setup() {
 
 	frameRate(30);
 
-	let c = 10;
+	let c = 4;
 	let w = width/2;
 	let h = height/2;
 
@@ -33,10 +33,10 @@ function setup() {
 function draw() {
 	background(255);
 
-		text('flee', width-fleeSlider.width-55, 35);
-		text('align', width-fleeSlider.width-60, 65);
-	  text('cohesion', width-fleeSlider.width-83, 95);
-	  text('separation', width-fleeSlider.width-90, 125);
+		text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
+		text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
+	  text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
+	  text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
 
 
 	sheeps.forEach((item, i) => {
