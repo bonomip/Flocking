@@ -42,14 +42,25 @@ function draw() {
 	sheeps.forEach((item, i) => {
 		item.setWolfPosition(mouseX, mouseY);
 		item.behaviour(sheeps);
+		item.bounds();
+		item.draw()
 	});
 
 	sheeps.forEach((item, i) => {
-		item.bounds();
 		item.step();
-		item.draw();
 	});
+}
 
-	//sheep.draw();
-	// put drawing code here
+function drawArrow(base, vec, myColor) {
+  push();
+  stroke(myColor);
+  strokeWeight(3);
+  fill(myColor);
+  translate(base.x, base.y);
+  line(0, 0, vec.x, vec.y);
+  rotate(vec.heading());
+  let arrowSize = 4;
+  translate(vec.mag() - arrowSize, 0);
+  triangle(0, arrowSize / 2, 0, -arrowSize / 2, arrowSize, 0);
+  pop();
 }
