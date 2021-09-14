@@ -5,6 +5,7 @@ constructor(x,y, size){
   this.debug = true;
 
   this.global_perception = 200;
+  this.perception_angle = 100;
   this.drag = 0.1;
 
   this.align_perception = 50;
@@ -133,7 +134,9 @@ align(sheeps){
   for(let other of sheeps){
       let d = this.pos.dist(other.pos);
 
-      if(other.velocity.mag() < this.align_speed_threshold || d > this.align_perception){
+      if( other.velocity.mag() < this.align_speed_threshold ||
+          d > this.align_perception ||
+          !this.isInMyView(other.pos, this.perception_angle)){
         continue;
       }
 
@@ -207,6 +210,20 @@ behaviour(sheeps){
   }
 }
 
+isInMyView(point, perception_angle){
+  let my_fwd = createVector(1, 0);
+  my_fwd.rotate(this.rotation);
+
+  let v = this.sub(point, this.pos);
+
+  return this.getflatAngleBetween(my_fwd, v) <= perception_angle;
+}
+
+getflatAngleBetween(v, w){
+  let dot = v.dot(w);
+  return acos(dot / (v.mag() * w.mag()));
+}
+
 getAngleBetween(v, w){
   let z = v.cross(w);
   z.normalize();
@@ -241,7 +258,7 @@ updateRotation(last, now){
   let e = 0.001;
   if(last.mag() < e && now.mag() > e){
     var a = atan2(now.x, now.y);
-    this.rotation = -a+90;
+    this.rotation = 90-a;
     return;
   }
 
@@ -301,23 +318,12 @@ drawVector(vector, color){ //DEBUg
 }
 
 drawDesired(){
-  let c1 = createVector(width/2 + 100,height/2);
-  let c2 = createVector(width/2 + 100,height/2);
-  let c3 = createVector(width/2 - 100,height/2);
-  let c4 = createVector(width/2 - 100 ,height/2);
-  let m1 = createVector(0, -100);
-  let m2 = createVector(75, -75);
+  let c1 = createVector(width/2,height/2);
+  let c2 = createVector(width/2,height/2);
+  let m1 = createVector(100, 0);
 
   drawArrow(c1, m1, "blue");
-      drawArrow(c1, m1, "green");
-        drawArrow(c1, this.sub(m1, m1), "red");
-
-
-  drawArrow(c3, m1, "blue");
-      drawArrow(c3, m1, "green");
-          drawArrow(c3, this.sub(m1, m1), "red");
-
-
+  drawArrow(c1, m1.rotate(this.rotation), "green");
 }
 
 drawBody(w, h){
