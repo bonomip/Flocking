@@ -4,39 +4,55 @@ class Sheep {
 constructor(x,y, size){
   this.debug = true;
 
-  this.global_perception = 200;
   this.perception_angle = 100;
   this.drag = 0.1;
 
-  this.align_perception = 50;
-  this.align_speed_threshold = 0.01;
-  this.align_max_steer_force = 0.5;
-  this.align_max_speed = 5; //the speed is going to be the disired vector magnitude,
-                            //higher the mag higher the angle between the velocity
-                            //and the steer vector
-                            // is also possibile to multiply the result steer vectory by a factor
-                            // to add force
-  this.align_velocity = createVector(0, 0);
-  this.align_acceleration = createVector(0, 0);
+  this.flee_min_perception = 30;
 
-  this.wolf_perception = 100;
-  this.wolf_min_perception = 30;
-  this.wolf_max_steer_force = 0.5;
-  this.wolf_max_flee_speed = 5;
-  this.wolf_flee_velocity = createVector(0, 0);
-  this.wolf_flee_acceleration = createVector(0, 0);
-
-  this.min_dist_sep = 20;
-  this.separation_factor = 0.4;
-
-  this.min_speed = 0.01;
-  this.max_speed = 5; // GLOBAL MAXIMUM SPEED
-  this.max_force = 5;
-
-  this.rotation = -90;
-  this.acceleration = createVector(0,0);
+  this.rotation = random(0, 360);
   this.pos = createVector(x, y);
-  this.velocity = createVector(0, 0);
+
+
+  this.glob = 0; this.flee = 1; this.align = 2; this.cohe = 3; this.sep = 4;
+
+  this.velocities = [ createVector(0, 0),   // 0 global velocity;
+                      createVector(0, 0),   // 1 flee velocity
+                      createVector(0, 0),   // 2 align velocity
+                      createVector(0, 0),   // 3 cohesion velocity
+                      createVector(0, 0) ]; // 4 separation velocity
+
+  this.accelerations = [ createVector(0, 0),  // 0 global acceleration;
+                        createVector(0, 0),   // 1 flee acceleration
+                        createVector(0, 0),   // 2 align acceleration
+                        createVector(0, 0),   // 3 cohesion acceleration
+                        createVector(0, 0) ]; // 4 separation acceleration
+
+  this.perceptions =  [ 200,  // 0 global perception
+                        100,  // 1 flee perception
+                        50,   // 2 align perception
+                        50,   // 3 cohesion perception
+                        50 ]; // 4 separation perception
+
+  this.speed_limits = [ 5,   // 0 global max speed;
+                        5,   // 1 flee max speed
+                        5,   // 2 align max speed
+                        5,   // 3 cohesion max speed
+                        5 ]; // 4 separation max speed
+
+  this.speed_threshold =  [ 0.01,  // 0 global min speed;
+                            0.01,   // 1 flee min speed
+                            0.01,   // 2 align min speed
+                            0.01,   // 3 cohesion min speed
+                            0.01 ]; // 4 separation min speed
+
+  this.force_limits = [ 0.5,  // 0 global max froce
+                        0.5,   // 1 flee max froce
+                        0.5,   // 2 align max froce
+                        0.5,   // 3 cohesion max froce
+                        0.5 ]; // 4 separation max froce
+
+
+
 
   this.w = 100 * size; //body width
   this.h = 50 * size; //body height
@@ -84,7 +100,7 @@ bounds(){
   else if ( this.pos.y < 0 )
     this.pos.y = height;
 }
-
+/*
 separation(sheeps){
   let avg_vel = createVector(0, 0);
   let tot = 0;
@@ -110,12 +126,18 @@ separation(sheeps){
 }
 
 cohesion(sheeps){
-  let avg_pos = createVector(0, 0);
+  let desired_pos = createVector(0, 0);
+  let count = 0;
 
-  for(let other of sheeps)
-      avg_pos.add(other.pos);
+  for(let other of sheeps){
+    let d = this.pos.dist(other.pos);
 
-  avg_pos.div(sheeps.length);
+    if(!this.isInMyView(other.pos, this.perception_angle, this.cohesion_perception))
+        continue;
+      desired_pos.add(other.pos);
+  }
+
+  desired_pos.div(sheeps.length);
   let avg_vel = this.sub(avg_pos, this.pos);
   let s = this.inverseForce(avg_vel.mag(), this.perception, this.max_speed);
   avg_vel.setMag(s);
@@ -123,8 +145,8 @@ cohesion(sheeps){
   return avg_vel;
 
 }
-
-align(sheeps){
+*/
+alignWith(sheeps){
   let desired = createVector(0, 0);
 
   let desired_speed = 0;
@@ -134,53 +156,50 @@ align(sheeps){
   for(let other of sheeps){
       let d = this.pos.dist(other.pos);
 
-      if( other.velocity.mag() < this.align_speed_threshold ||
-          d > this.align_perception ||
-          !this.isInMyView(other.pos, this.perception_angle)){
+      if( !this.isInMyView(other.pos, this.perceptions[this.align])
+          || other.velocities[this.glob].mag() < this.speed_threshold[this.align])
         continue;
-      }
-
-      desired.add(other.velocity);
-      desired_speed += other.velocity.mag();
+      desired.add(other.velocities[this.glob]);
+      desired_speed += other.velocities[this.glob].mag();
       count++;
     }
 
   if(count == 0)
-    return this.sub(createVector(0, 0), this.align_velocity);
+    return this.sub(createVector(0, 0), this.velocities[this.align]);
 
   desired_speed /= count;
 
-  desired.div(count);
+  desired.normalize();
   desired.mult(desired_speed);
-  desired.limit(this.align_max_speed);
+  desired.limit(this.speed_limits[this.align]);
 
-  let steer = this.sub(desired, this.align_velocity).limit(this.align_max_steer_force);
+  let steer = this.sub(desired, this.velocities[this.align]).limit(this.force_limits[this.align]);
 
   return steer;
 }
 
-flee(){
+fleeFrom(){
   let desired = this.sub(this.pos, this.wolf);
-
   let d = desired.mag();
 
   desired.normalize();
 
-  if(d > this.wolf_perception)
-    return this.sub(createVector(0,0), this.wolf_flee_velocity);
+  if(d > this.perceptions[this.flee])
+    return this.sub(createVector(0,0), this.velocities[this.flee]);
 
   let m;
 
-  if(d < this.wolf_min_perception){
-    m = this.wolf_max_flee_speed;
+  if(d < this.flee_min_perception){
+    m = this.speed_limits[this.flee];
   } else {
-    m = map(d, 20, this.wolf_perception, this.wolf_max_flee_speed, 0);
+    m = map(d, 20, this.perceptions[this.flee], this.speed_limits[this.flee], 0);
   }
 
 
   desired.mult(m);
 
-  let steer = this.sub(desired, this.wolf_flee_velocity).limit(this.wolf_max_steer_force);
+  let steer = this.sub(desired, this.velocities[this.flee]).limit(this.force_limits[this.flee]);
+
   return steer;
 }
 
@@ -191,125 +210,90 @@ behaviour(sheeps){
   let neighbors = [];
 
   for(let sheep of sheeps)
-    if(sheep != this && this.global_perception > this.dist(sheep.pos, this.pos))
+    if(sheep != this && this.perceptions[this.glob] > this.dist(sheep.pos, this.pos))
       neighbors.push(sheep);
 
-  let fleeSteer = this.flee()
-  this.wolf_flee_acceleration = fleeSteer.mult(fleeSlider.value());
+  let fleeSteer = this.fleeFrom()
+  this.accelerations[this.flee] = fleeSteer.mult(fleeSlider.value());
 
-  if(neighbors.length != 0)
-  {
+    let alignSteer = this.alignWith(neighbors)
+    this.accelerations[this.align] = alignSteer.mult(alignSlider.value());
+
     //let separationSteer = this.separation(neighbors);
     //this.applyForce(separationSteer.mult(separationSlider.value()));
 
-    let alignSteer = this.align(neighbors)
-    this.align_acceleration = alignSteer.mult(alignSlider.value());
-
     //let cohesionSteer = this.cohesion(neighbors);
     //this.applyForce(cohesionSteer.mult(cohesionSlider.value()));
-  }
 }
 
-isInMyView(point, perception_angle){
+isInMyView(point, radius){
   let my_fwd = createVector(1, 0);
   my_fwd.rotate(this.rotation);
 
   let v = this.sub(point, this.pos);
 
-  return this.getflatAngleBetween(my_fwd, v) <= perception_angle;
-}
-
-getflatAngleBetween(v, w){
-  let dot = v.dot(w);
-  return acos(dot / (v.mag() * w.mag()));
-}
-
-getAngleBetween(v, w){
-  let z = v.cross(w);
-  z.normalize();
-  z.normalize(); //need to avoid 0, 0, 0.999999999999999
-
-  let up = createVector(0, 0, 1);
-  let down = createVector(0, 0, -1);
-  let dot = v.dot(w);
-
-
-  if(z.mag() < 1)
-      return 0;
-
-  let args = dot / (v.mag() * w.mag());
-
-  if(args > 1)
-    args = 1;
-  if(args < -1)
-    args = -1;
-
-
-  if(z.dot(up) == 1){
-    return acos(args);
-  } else if(z.dot(down) == 1){
-    return acos(args) * (-1);
-  }
-
-  return NaN;
+  return (abs(my_fwd.angleBetween(v)) <= this.perception_angle) && (this.dist(point, this.pos) < radius);
 }
 
 updateRotation(last, now){
   let e = 0.001;
-  if(last.mag() < e && now.mag() > e){
-    var a = atan2(now.x, now.y);
-    this.rotation = 90-a;
+
+  if(last.mag() < e){
+    if(now.mag() >= e)
+      this.rotation = 90-atan2(now.x, now.y);
     return;
   }
 
-  this.rotation += this.getAngleBetween(last, now);
+  this.rotation += last.angleBetween(now);
+
+  if(this.rotation >= 360)
+    this.rotation = this.rotation %360;
+
 }
 
-step(){
+step() {
+  let last_frame_velocity = this.velocities[this.glob].copy(); //save last velocity
 
-  this.wolf_flee_velocity.add(this.wolf_flee_acceleration);
-  this.wolf_flee_velocity.limit(this.wolf_max_flee_speed);
+  for(let i = 1; i < this.velocities.length; i++){
+    this.velocities[i].add(this.accelerations[i]);
+    this.velocities[i].limit(this.speed_limits[i]);
+    this.velocities[this.glob].add(this.velocities[i]);
+  }
 
-  this.align_velocity.add(this.align_acceleration);
-  this.align_velocity.limit(this.align_max_speed);
+  this.velocities[this.glob].limit(this.speed_limits[this.glob]);
+  this.velocities[this.glob].mult(1-this.drag);
 
-  let last_frame_velocity = this.velocity.copy();
+  this.updateRotation(last_frame_velocity, this.velocities[this.glob].copy());
 
-  this.velocity.add(this.wolf_flee_velocity);
-  this.velocity.add(this.align_velocity);
+  for(let i = 0; i < this.velocities.length; i++){
+    if(this.velocities[i].mag() <= this.speed_threshold[i])
+      this.velocities[i].mult(0);
+  }
 
-  this.velocity.limit(this.max_speed);
-  this.velocity.mult(1-this.drag);
+  this.pos.add(this.velocities[this.glob]);
 
-  this.updateRotation(last_frame_velocity, this.velocity.copy());
-
-  if(this.velocity.mag() <= this.min_speed)
-    this.velocity.mult(0);
-  if(this.wolf_flee_velocity.mag() <= this.min_speed)
-    this.wolf_flee_velocity.mult(0);
-  if(this.align_velocity.mag() <= this.min_speed)
-    this.align_velocity.mult(0);
-
-  this.pos.add(this.velocity);
-
-  this.acceleration.mult(0);
-  this.wolf_flee_acceleration.mult(0);
-  this.align_acceleration.mult(0);
+  for(let i = 0; i < this.accelerations.length; i++ )
+      this.accelerations[i].mult(0);
 }
 
 //DRAW METHODS
 
 drawAlignPerception(){ //DEBUg
-  noFill();
-  stroke(255, 0, 0);
-  circle(0, 0, this.align_perception*2);
-
+  fill(255, 0, 0, 50);
+  noStroke();
+  arc( 0,
+       0,
+       this.perceptions[this.align]*2,
+       this.perceptions[this.align]*2,
+       -this.perception_angle,
+       this.perception_angle,
+       PIE );
 }
 
 drawWolfPerception(){ //DEBUG
   noFill();
   stroke(0, 255, 0);
-  circle(0, 0, this.wolf_perception*2);
+  circle(0, 0, this.perceptions[this.flee]*2);
 }
 
 drawVector(vector, color){ //DEBUg
@@ -347,12 +331,11 @@ draw(alpha){
   translate(this.pos.x, this.pos.y);
   rotate(this.rotation);
 
+  this.drawAlignPerception();
   this.drawBody(this.w, this.h);
   this.drawHead(createVector(1,0), this.w, this.c);
 
   pop();
-
-
 
   //this.drawDesired();
   //this.drawVector(this.velocity, "green")
