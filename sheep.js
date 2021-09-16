@@ -29,7 +29,7 @@ constructor(x,y, size, angle, debug){
                         50    // 4 separation perception
                       ];
   this.speed_limits = [
-                        2,   // 0 global max speed;
+                        5,   // 0 global max speed;
                         5,   // 1 flee max speed
                         5,   // 2 align max speed
                         5,   // 3 cohesion max speed
@@ -97,10 +97,18 @@ dot(v, w){
 setWolf(x, y){
   this.wolf = createVector(x, y);
 }
+/*
+PVector desired = new PVector(maxspeed,velocity.y);
+ PVector steer = PVector.sub(desired, velocity);
+ steer.limit(maxforce);
+ applyForce(steer);
+*/
+
 
 bounds(){
-  if(this.pos.x > width-this.w/2)
+  if(this.pos.x > width-this.w/2){
     this.pos.x = width-this.w/2;
+  }
   else if ( this.pos.x < 0 +this.w/2)
     this.pos.x = 0+this.w/2;
 

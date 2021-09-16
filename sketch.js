@@ -16,7 +16,7 @@ function setup() {
 
 	frameRate(30);
 
-	let c = 11;
+	let c = 2;
 	let w = width/2;
 	let h = height/2;
 
@@ -37,14 +37,14 @@ function draw() {
 
 
 	sheeps.forEach((item, i) => {
-		item.setWolf(mouseX, mouseY);
-		item.bounds();
-		item.computeBehaviours(sheeps);
 		item.draw()
+		item.setWolf(mouseX, mouseY);
+		item.computeBehaviours(sheeps);
 	});
 
 	sheeps.forEach((item, i) => {
 		item.applyBehaviours();
+		item.bounds();
 	});
 }
 
