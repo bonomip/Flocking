@@ -4,30 +4,27 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 	angleMode(DEGREES);
 
-	fleeSlider = createSlider(0, 5, 1, 0.1);
+	fleeSlider = createSlider(0, 1, 1, 0.1);
 	fleeSlider.position(width-fleeSlider.width-30, 20);
-	alignSlider = createSlider(0, 5, 1, 0.1);
+	alignSlider = createSlider(0, 1, 1, 0.1);
 	alignSlider.position(width-fleeSlider.width-30, 50);
-	cohesionSlider = createSlider(0, 5, 1, 0.1);
+	cohesionSlider = createSlider(0, 1, 1, 0.1);
 	cohesionSlider.position(width-fleeSlider.width-30, 80);
-	separationSlider = createSlider(0, 5, 1, 0.1);
+	separationSlider = createSlider(0, 1, 1, 0.1);
 	separationSlider.position(width-fleeSlider.width-30, 110);
 
 
 	frameRate(30);
 
-	let c = 10;
+	let c = 11;
 	let w = width/2;
 	let h = height/2;
 
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
-			sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.2));
+			sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.2, random(0, 360), false));
 		}
 	}
-
-	//sheep = new Sheep(width/2, height/2, 0);
-	// put setup code here
 }
 
 function draw() {
