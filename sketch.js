@@ -1,7 +1,7 @@
 let sheeps = [];
 
 function setup() {
-	createCanvas(windowWidth, windowHeight);
+	createCanvas(600, 600);
 	angleMode(DEGREES);
 
 	fleeSlider = createSlider(0, 1, 1, 0.1);
@@ -22,7 +22,7 @@ function setup() {
 
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
-			sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.2, random(0, 360), false));
+			sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.5, random(0, 360), false));
 		}
 	}
 }

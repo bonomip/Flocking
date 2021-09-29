@@ -22,11 +22,11 @@ constructor(x,y, size, angle, debug){
 
                         ];
   this.perceptions = [
-                        150,  // 0 global perception
-                        100,  // 1 flee perception
-                        75,   // 2 align perception
-                        75,   // 3 cohesion perception
-                        50    // 4 separation perception
+                        750*size,  // 0 global perception
+                        500*size,  // 1 flee perception
+                        375*size,   // 2 align perception
+                        375*size,   // 3 cohesion perception
+                        250*size    // 4 separation perception
                       ];
   this.speed_limits = [
                         5,   // 0 global max speed;
