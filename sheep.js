@@ -188,7 +188,7 @@ separation(sheeps){
   return steer;
 }
 
-cohesion(sheeps){
+cohesion(sheeps, f){
   let avg_pos = createVector(0, 0);
   let count = 0;
 
@@ -216,13 +216,14 @@ cohesion(sheeps){
     desired.setMag(m);
   }
 
+  desired.mult(f);
   steer = this.sub(desired, this.velocities[this.cohe]);
   steer.limit(this.force_limits[this.cohe]);
 
   return steer;
 }
 
-alignWith(sheeps){
+alignWith(sheeps, f){
   let desired = createVector(0, 0);
 
   let desired_speed = 0;
@@ -249,6 +250,7 @@ alignWith(sheeps){
 
   desired.setMag(desired_speed);
   desired.limit(this.speed_limits[this.align]);
+  desired.mult(f);
 
   let steer = this.sub(desired, this.velocities[this.align]);
   steer.limit(this.force_limits[this.align]);
@@ -256,9 +258,7 @@ alignWith(sheeps){
   return steer;
 }
 
-fleeFrom(){
-  let desired = this.sub(this.pos, this.wolf);
-  let d = desired.mag();
+fleeFrom(desired, d){
 
   if(!this.isInMyView(this.wolf, 360, this.perceptions[this.flee]))
     return this.sub(createVector(0,0), this.velocities[this.flee])
@@ -309,16 +309,21 @@ computeBehaviours(sheeps){
     if(sheep != this && this.perceptions[this.glob] > this.dist(sheep.pos, this.pos))
       neighbors.push(sheep);
 
-  let fleeSteer = this.fleeFrom()
+  let v =  this.sub(this.pos, this.wolf); //vector from wolf position to my position
+  let m = v.mag(); //magitude of that vector
+  let fleeFactor = map(m, 0, this.perceptions[this.flee], 1, 0); //how much i'm fleeing
+
+  let fleeSteer = this.fleeFrom(v, m); //passing this argument so i dont have to
+                                      // compute them twice ;)
   this.accelerations[this.flee] = fleeSteer.mult(fleeSlider.value());
 
-  let alignSteer = this.alignWith(neighbors)
+  let alignSteer = this.alignWith(neighbors, fleeFactor);
   this.accelerations[this.align] = alignSteer.mult(alignSlider.value());
 
   let separationSteer = this.separation(neighbors);
   this.accelerations[this.sep] = separationSteer.mult(separationSlider.value());
 
-  let cohesionSteer = this.cohesion(neighbors);
+  let cohesionSteer = this.cohesion(neighbors, fleeFactor);
   this.accelerations[this.cohe] = (cohesionSteer.mult(cohesionSlider.value()));
 }
 
