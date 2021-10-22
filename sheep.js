@@ -1,8 +1,16 @@
 class Sheep {
 
 //dir is an angle 0 to 360
-constructor(x,y, size, angle, debug){
+constructor(x,y, size, angle, debug, color = "black"){
   this.debug = debug;
+
+  this.color = color;
+  this.size = size;
+  this.w = 100 * size; //body width
+  this.h = 50 * size; //body height
+  this.c = 30 * size; //head size
+  this.rotation = angle; //current rotation
+  this.pos = createVector(x, y); //current position
 
   this.glob = 0; this.flee = 1; this.align = 2; this.cohe = 3; this.sep = 4;
 
@@ -22,18 +30,18 @@ constructor(x,y, size, angle, debug){
 
                         ];
   this.perceptions = [
-                        750*size,  // 0 global perception
-                        500*size,  // 1 flee perception
-                        375*size,   // 2 align perception
-                        375*size,   // 3 cohesion perception
-                        250*size    // 4 separation perception
+                        0*size,   // 0 global perception //not used
+                        3200*size,   // 1 flee perception
+                        1000*size,   // 2 align perception
+                        0*size,   // 3 cohesion perception //not used because we use global
+                        500*size  // 4 separation perception
                       ];
   this.speed_limits = [
-                        5,   // 0 global max speed;
-                        5,   // 1 flee max speed
-                        5,   // 2 align max speed
-                        5,   // 3 cohesion max speed
-                        5    // 4 separation max speed
+                        2,   // 0 global max speed;
+                        1,   // 1 flee max speed
+                        1,   // 2 align max speed
+                        2,   // 3 cohesion max speed
+                        1   // 4 separation max speed
                       ];
   this.speed_threshold = [
                             0.01,  // 0 global min speed;
@@ -46,26 +54,21 @@ constructor(x,y, size, angle, debug){
                         0.5,  // 0 global max froce
                         0.5,   // 1 flee max froce
                         0.5,   // 2 align max froce
-                        0.5,   // 3 cohesion max froce
-                        0.5   // 4 separation max froce
+                        5,   // 3 cohesion max froce
+                        0.5  // 4 separation max froce
                           ];
 
   this.perception_angle = 75; //angle of view
   this.drag = 0.1; //drag
-  this.max_steer_angle = 25;
-  this.min_adjusted_speed = 0.5; // the minimum speed of the sheep when
+  this.max_steer_angle = 20;
+  this.min_adjusted_speed = 0.1; // the minimum speed of the sheep when
                                 // it's new velocity is completly inverse of
                                 // last frame velocity
 
-  this.flee_min_perception = 30;
-  this.cohe_min_distance = 10;
-  this.separation_min_distance = 10;
-
-  this.w = 100 * size; //body width
-  this.h = 50 * size; //body height
-  this.c = 30 * size; //head size
-  this.rotation = angle; //current rotation
-  this.pos = createVector(x, y); //current position
+  this.flee_min_perception = 300*size;
+  this.cohe_min_distance = 100*size;
+  this.separation_min_distance = this.size * 5;
+  this.fear = 0;
 }
 
 mult(v, w){
@@ -97,13 +100,6 @@ dot(v, w){
 setWolf(x, y){
   this.wolf = createVector(x, y);
 }
-/*
-PVector desired = new PVector(maxspeed,velocity.y);
- PVector steer = PVector.sub(desired, velocity);
- steer.limit(maxforce);
- applyForce(steer);
-*/
-
 
 bounds(){
   if(this.pos.x > width-this.w/2){
@@ -143,87 +139,142 @@ updateRotation(last, now){
 
 }
 
+inverseFunction(x, s){
+  return pow(x/s + 0.0001, -2);
+}
+
 // BEHAVIOUR METHODS
 
-separation(sheeps){
+
+///////////// SEPARATION ////////////////
+
+log(b, x){
+  return log(x) / log(b);
+}
+
+computeSepM0(x, r, max, min){
+  let e = -log(r/min, max);
+
+  if(x < min)
+    return exp(min/r, e);
+  else
+    return exp(x/r, e);
+}
+
+computeSepVector(other){
+  let v = this.sub(this.pos, other.pos);
+  let d = v.mag();
+
+  if(d < 0.00001) //overlapping
+      v = p5.Vector.random2D();
+
+  v.setMag(d);
+
+  return v;
+}
+
+computeSepDesired(perception, max_speed, dist_threshold){
   let desired = createVector(0, 0);
-  let desired_speed = 0;
   let count = 0;
 
   for(let other of sheeps){
-    let v = this.sub(this.pos, other.pos);
-    let d = this.dist(this.pos, other.pos);
-    let m, w;
-
-    if(!this.isInMyView(other.pos, 360, this.perceptions[this.sep]))
+    if(!this.isInMyView(other.pos, 360, perception))
       continue;
 
-    if(d < 0.01){ //if i'm sovrappsed go away in a random way at max speed
-      w = p5.Vector.random2D();
-      m = this.speed_limits[this.sep];
-    } else if( d < this.separation_min_distance ){
-        w = v;
-        m = this.speed_limits[this.sep];
-      } else {
-      w = v;
-      m = map(d, this.separation_min_distance, this.perceptions[this.sep], this.speed_limits[this.sep], 0);
-    }
-
-    w.setMag(m);
-    desired.add(w);
-    desired_speed += m;
+    desired.add(this.computeSepVector(other));
     count++;
   }
 
   if(count == 0)
-    return this.sub(desired, this.velocities[this.sep])
-                  .limit(this.force_limits[this.sep]);
+    return createVector(0, 0);
 
   desired.div(count);
-  desired_speed /= count;
-  desired.setMag(desired_speed);
+  let m0 = this.computeSepM0(desired.mag(), perception, max_speed, dist_threshold);
+  desired.limit(max_speed);
+  if(this.fear > 0.5){
+    desired.mult(0);
+    return desired;
+  }
 
+  desired.mult(m0*separationSlider.value()*(1-this.fear));
+
+  return desired;
+}
+
+computeSepSteer(sheeps){
+  let desired = this.computeSepDesired(
+    this.perceptions[this.sep],
+    this.speed_limits[this.sep],
+    this.cohe_min_distance);
   let steer = this.sub(desired, this.velocities[this.sep]);
   steer.limit(this.force_limits[this.sep]);
   return steer;
 }
 
-cohesion(sheeps, f){
+
+
+///////////// COHESION //////////////////
+
+//d = distance
+//max = is the max length
+//min = minimum distance
+//e = exponent
+computeCoheM0(d, max, min, e){
+  if(d < min)
+    return 0;
+  if(d > max)
+    return 1;
+
+  return pow(d/max, e);
+}
+
+computeAvgPos(sheeps){
   let avg_pos = createVector(0, 0);
-  let count = 0;
 
-  for(let other of sheeps){
-    if(!this.isInMyView(other.pos, this.perception_angle, this.perceptions[this.cohe]))
-        continue;
+  for(let other of sheeps)
       avg_pos.add(other.pos);
-      count++;
-  }
 
-  if(count == 0)
-    return this.sub(createVector(0,0), this.velocities[this.cohe])
-                .limit(this.force_limits[this.cohe]);
+  return avg_pos.div(sheeps.length);
+}
 
-  avg_pos.div(count);
-  let desired = this.sub(avg_pos, this.pos);
-  let mag = desired.mag();
+computeCoheDesired(pos){
+
+  let desired = this.sub(pos, this.pos);
+  let m0 = this.computeCoheM0(
+    desired.mag(),
+    1000*this.size,
+    this.cohe_min_distance,
+    2);
+
+  desired.normalize();
+  desired.mult(m0*this.fear*cohesionSlider.value());
+  desired.limit(this.velocities[this.cohe]);
+
+  return desired;
+}
+
+computeCoheSteer(sheeps){
 
   let steer;
 
-  if(mag < this.cohe_min_distance){
-    desired = createVector(0, 0);
-  } else {
-    let m = map(mag, this.cohe_min_distance, this.perceptions[this.cohe], 0, this.speed_limits[this.cohe]);
-    desired.setMag(m);
-  }
+  if(sheeps.length == 0)
+    steer = this.sub(createVector(0,0),this.velocities[this.cohe]);
+  else
+    steer = this.sub(
+                  this.computeCoheDesired(this.computeAvgPos(sheeps)),
+                  this.velocities[this.cohe]);
 
-  desired.mult(f);
-  steer = this.sub(desired, this.velocities[this.cohe]);
   steer.limit(this.force_limits[this.cohe]);
 
   return steer;
 }
 
-alignWith(sheeps, f){
+
+//////////// ALIGNMENT /////////////////
+
+
+
+alignWith(sheeps){
   let desired = createVector(0, 0);
 
   let desired_speed = 0;
@@ -250,7 +301,7 @@ alignWith(sheeps, f){
 
   desired.setMag(desired_speed);
   desired.limit(this.speed_limits[this.align]);
-  desired.mult(f);
+  desired.mult(this.fear);
 
   let steer = this.sub(desired, this.velocities[this.align]);
   steer.limit(this.force_limits[this.align]);
@@ -266,10 +317,10 @@ fleeFrom(desired, d){
 
   let m;
 
-  if(d < this.flee_min_perception){
+  if(d <= this.flee_min_perception){
     m = this.speed_limits[this.flee];
   } else {
-    m = map(d, 20, this.perceptions[this.flee], this.speed_limits[this.flee], 0);
+    m = map(d, this.flee_min_perception, this.perceptions[this.flee], this.speed_limits[this.flee], 0);
   }
 
 
@@ -301,30 +352,32 @@ constrainVelocityAngle(fwd, vel){ // pass by copy
   }
 }
 
+computeFearFactor(r, d){
+  angleMode(RADIANS);
+  let fear = atan((r-d)/20)/PI + 0.5;
+  angleMode(DEGREES);
+  return fear;
+}
+
 computeBehaviours(sheeps){
 
   let neighbors = [];
 
-  for(let sheep of sheeps)
-    if(sheep != this && this.perceptions[this.glob] > this.dist(sheep.pos, this.pos))
-      neighbors.push(sheep);
+  for(let sheep of sheeps) if(sheep != this) neighbors.push(sheep);
 
   let v =  this.sub(this.pos, this.wolf); //vector from wolf position to my position
   let m = v.mag(); //magitude of that vector
-  let fleeFactor = map(m, 0, this.perceptions[this.flee], 1, 0); //how much i'm fleeing
 
-  let fleeSteer = this.fleeFrom(v, m); //passing this argument so i dont have to
-                                      // compute them twice ;)
-  this.accelerations[this.flee] = fleeSteer.mult(fleeSlider.value());
+  this.fear = this.computeFearFactor(this.perceptions[this.flee], m);
 
-  let alignSteer = this.alignWith(neighbors, fleeFactor);
-  this.accelerations[this.align] = alignSteer.mult(alignSlider.value());
+  //passing those argument so i dont have to compute them twice ;)
+  this.accelerations[this.flee] = this.fleeFrom(v, m).mult(fleeSlider.value());
 
-  let separationSteer = this.separation(neighbors);
-  this.accelerations[this.sep] = separationSteer.mult(separationSlider.value());
+  this.accelerations[this.cohe] = this.computeCoheSteer(neighbors);
 
-  let cohesionSteer = this.cohesion(neighbors, fleeFactor);
-  this.accelerations[this.cohe] = (cohesionSteer.mult(cohesionSlider.value()));
+  this.accelerations[this.align] = this.alignWith(neighbors).mult(alignSlider.value());
+
+  this.accelerations[this.sep] = this.computeSepSteer(neighbors);
 }
 
 applyBehaviours() {
@@ -358,30 +411,28 @@ applyBehaviours() {
 
 //DRAW METHODS
 
-drawSeparationPerception(){
+drawPerception(i, r = 255, g = 0, b = 0,  a = 360){
   noFill();
-  stroke(0, 255, 0);
-  circle(0, 0, this.perceptions[this.sep]*2);
-  stroke(0, 125, 0);
-  circle(0, 0, this.separation_min_distance*2);
-}
+  stroke(r, g, b);
 
-drawAlignPerception(){ //DEBUg
-  fill(255, 0, 0, 50);
-  noStroke();
-  arc( 0,
-       0,
-       this.perceptions[this.align]*2,
-       this.perceptions[this.align]*2,
-       -this.perception_angle,
-       this.perception_angle,
-       PIE );
-}
+  if(a == 360){
+    circle(0, 0, this.perceptions[i]*2);
 
-drawWolfPerception(){ //DEBUG
-  noFill();
-  stroke(255, 0, 255);
-  circle(0, 0, this.perceptions[this.flee]*2);
+    if(i == this.sep){
+      stroke(r/2, g/2, b/2);
+      circle(0, 0, this.separation_min_distance*2);
+    }
+    if(i == this.flee){
+      stroke(r/2, g/2, b/2);
+      circle(0, 0, this.flee_min_perception*2);
+    }
+    if(i == this.cohe){
+      stroke(r/2, g/2, b/2);
+      circle(0, 0, this.cohe_min_distance*2);
+    }
+  } else {
+    arc( 0, 0, this.perceptions[i]*2, this.perceptions[i]*2, -a, a, PIE );
+  }
 }
 
 drawVector(vector, color){ //DEBUg
@@ -399,10 +450,16 @@ drawDesired(){
 }
 
 drawBody(w, h){
+  /* body as rectangle
   fill(60);
   noStroke();
   rectMode(CENTER);
   rect(0, 0, w, h);
+  */
+
+  fill(this.color);
+  noStroke();
+  circle(0, 0, this.w);
 }
 
 drawHead(f, w, s){
@@ -419,8 +476,9 @@ draw(alpha){
   translate(this.pos.x, this.pos.y);
   rotate(this.rotation);
 if(this.debug){
-  this.drawSeparationPerception();
-  //this.drawWolfPerception();
+  //this.drawPerception(this.sep, 255, 125, 0);
+  //this.drawPerception(this.flee, 125, 255, 0);
+  //this.drawPerception(this.cohe, this.perception_angle);
 }
   this.drawBody(this.w, this.h);
   this.drawHead(createVector(1,0), this.w, this.c);
