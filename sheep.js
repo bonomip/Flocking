@@ -60,8 +60,8 @@ constructor(x,y, size, angle, debug, color = "black"){
 
   this.perception_angle = 75; //angle of view
   this.drag = 0.1; //drag
-  this.max_steer_angle = 20;
-  this.min_adjusted_speed = 0.1; // the minimum speed of the sheep when
+  this.max_steer_angle = 5;
+  this.min_adjusted_speed = 0.2; // the minimum speed of the sheep when
                                 // it's new velocity is completly inverse of
                                 // last frame velocity
 
@@ -211,14 +211,12 @@ computeSepSteer(sheeps){
   return steer;
 }
 
-
-
 ///////////// COHESION //////////////////
 
-//d = distance
+/*d = distance
 //max = is the max length
 //min = minimum distance
-//e = exponent
+e = exponent*/
 computeCoheM0(d, max, min, e){
   if(d < min)
     return 0;
@@ -269,10 +267,7 @@ computeCoheSteer(sheeps){
   return steer;
 }
 
-
 //////////// ALIGNMENT /////////////////
-
-
 
 alignWith(sheeps){
   let desired = createVector(0, 0);
@@ -340,16 +335,20 @@ constrainVelocityAngle(fwd, vel){ // pass by copy
   if(isNaN(alpha) || abs(alpha) < this.max_steer_angle ) //if alpha is NaN so vel is 0, 0, 0;
     return vel;
 
-  if(abs(alpha) == 180){
+  /*if(abs(alpha) == 180){ // the sheep wants to go backwards
     vel.rotate(this.max_steer_angle-alpha);
     vel.setMag(this.min_adjusted_speed);
-    return vel;
-  } else{
-    let m = map(abs(alpha), this.max_steer_angle, 180, vel.mag(), this.min_adjusted_speed);
+  } */
+  let m = map(abs(alpha), this.max_steer_angle, 180, vel.mag(), this.min_adjusted_speed);
+  vel.setMag(m);
+
+  if(alpha < 0){
+    vel.rotate(-alpha-this.max_steer_angle);
+  } else {
     vel.rotate(this.max_steer_angle-alpha);
-    vel.setMag(m);
-    return vel;
   }
+
+  return vel;
 }
 
 computeFearFactor(r, d){
@@ -450,16 +449,15 @@ drawDesired(){
 }
 
 drawBody(w, h){
-  /* body as rectangle
-  fill(60);
+  //body as rectangle
+  fill(this.color);
   noStroke();
   rectMode(CENTER);
   rect(0, 0, w, h);
-  */
 
-  fill(this.color);
+  /*fill(this.color);
   noStroke();
-  circle(0, 0, this.w);
+  circle(0, 0, this.w);*/
 }
 
 drawHead(f, w, s){

@@ -37,12 +37,14 @@ function setup() {
 function draw() {
 	background(255);
 
-		text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
-		text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
-	  text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
-	  text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
-	  text('speed '+sss.value(), width-fleeSlider.width-90, 155);
-		text('force '+sfs.value(), width-fleeSlider.width-85, 185);
+	
+
+	text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
+	text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
+  text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
+  text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
+  text('speed '+sss.value(), width-fleeSlider.width-90, 155);
+	text('force '+sfs.value(), width-fleeSlider.width-85, 185);
 
 	sheeps.forEach((item, i) => {
 		item.draw()
@@ -54,6 +56,42 @@ function draw() {
 		item.applyBehaviours();
 		item.bounds();
 	});
+}
+
+function debugAngle() {
+  background(240);
+  let v0 = createVector(100, 100);
+
+  let v1 = createVector(100, -50);
+  drawArrow(v0, v1, 'red');
+
+  let v2 = createVector(mouseX - 100, mouseY - 100);
+  drawArrow(v0, v2, 'blue');
+
+	let a = 5;
+  let angleBetween = v1.angleBetween(v2);
+
+	if(abs(angleBetween) < a)
+		drawArrow(v0, v2, 'green');
+	else if(angleBetween < 0){
+		v2.rotate(-angleBetween-a);
+		drawArrow(v0, v2, 'green');
+	} else {
+		v2.rotate(a-angleBetween);
+		drawArrow(v0, v2, 'green');
+	}
+
+
+  noStroke();
+  text(
+    'angle between: ' +
+      angleBetween.toFixed(2) +
+      ' radians',
+    10,
+    50,
+    90,
+    50
+  );
 }
 
 function drawArrow(base, vec, myColor) {
