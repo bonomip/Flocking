@@ -1,7 +1,7 @@
 let sheeps = [];
 
 function setup() {
-	createCanvas(600, 600);
+	createCanvas(900, 680);
 	angleMode(DEGREES);
 
 	fleeSlider = createSlider(0, 1, 1, 0.1);
@@ -34,10 +34,31 @@ function setup() {
 	}
 }
 
+let lmx = 0;
+let lmy = 0;
+let vel = 5;
+
 function draw() {
 	background(255);
 
-	
+	let p1 = createVector(lmx, lmy);
+	let p2 = createVector(mouseX, mouseY);
+	let p3;
+
+	let v = p5.Vector.sub(p2, p1);
+	if(v.mag() > vel){
+		v.setMag(vel);
+		p3 = p5.Vector.add(p1, v);
+	} else {
+		p3 = p2;
+	}
+
+	lmx = p3.x;
+	lmy = p3.y;
+
+	noStroke();
+	fill("green");
+  circle(lmx, lmy, 20);
 
 	text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
 	text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
@@ -48,7 +69,7 @@ function draw() {
 
 	sheeps.forEach((item, i) => {
 		item.draw()
-		item.setWolf(mouseX, mouseY);
+		item.setWolf(lmx, lmy);
 		item.computeBehaviours(sheeps);
 	});
 
