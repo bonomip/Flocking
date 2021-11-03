@@ -1,7 +1,7 @@
 let sheeps = [];
 
 function setup() {
-	createCanvas(600, 600);
+	createCanvas(900, 680);
 	angleMode(DEGREES);
 
 	fleeSlider = createSlider(0, 1, 1, 0.1);
@@ -34,19 +34,42 @@ function setup() {
 	}
 }
 
+let lmx = 0;
+let lmy = 0;
+let vel = 5;
+
 function draw() {
 	background(255);
 
-		text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
-		text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
-	  text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
-	  text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
-	  text('speed '+sss.value(), width-fleeSlider.width-90, 155);
-		text('force '+sfs.value(), width-fleeSlider.width-85, 185);
+	let p1 = createVector(lmx, lmy);
+	let p2 = createVector(mouseX, mouseY);
+	let p3;
+
+	let v = p5.Vector.sub(p2, p1);
+	if(v.mag() > vel){
+		v.setMag(vel);
+		p3 = p5.Vector.add(p1, v);
+	} else {
+		p3 = p2;
+	}
+
+	lmx = p3.x;
+	lmy = p3.y;
+
+	noStroke();
+	fill("green");
+  circle(lmx, lmy, 20);
+
+	text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
+	text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
+  text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
+  text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
+  text('speed '+sss.value(), width-fleeSlider.width-90, 155);
+	text('force '+sfs.value(), width-fleeSlider.width-85, 185);
 
 	sheeps.forEach((item, i) => {
 		item.draw()
-		item.setWolf(mouseX, mouseY);
+		item.setWolf(lmx, lmy);
 		item.computeBehaviours(sheeps);
 	});
 
@@ -54,6 +77,42 @@ function draw() {
 		item.applyBehaviours();
 		item.bounds();
 	});
+}
+
+function debugAngle() {
+  background(240);
+  let v0 = createVector(100, 100);
+
+  let v1 = createVector(100, -50);
+  drawArrow(v0, v1, 'red');
+
+  let v2 = createVector(mouseX - 100, mouseY - 100);
+  drawArrow(v0, v2, 'blue');
+
+	let a = 5;
+  let angleBetween = v1.angleBetween(v2);
+
+	if(abs(angleBetween) < a)
+		drawArrow(v0, v2, 'green');
+	else if(angleBetween < 0){
+		v2.rotate(-angleBetween-a);
+		drawArrow(v0, v2, 'green');
+	} else {
+		v2.rotate(a-angleBetween);
+		drawArrow(v0, v2, 'green');
+	}
+
+
+  noStroke();
+  text(
+    'angle between: ' +
+      angleBetween.toFixed(2) +
+      ' radians',
+    10,
+    50,
+    90,
+    50
+  );
 }
 
 function drawArrow(base, vec, myColor) {
