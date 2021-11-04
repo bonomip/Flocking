@@ -6,9 +6,8 @@ class Sheep {
     //// TODO:  add mood for each sheep
     //to create diversity
     //the sheep is going to react based on the mood to different stimulus
-    //this.sep_mood = random(0, 10);
+    this.sep_mood = random(1, 11);
     //this.flee_mood = random(0, 10);
-
     //sheep's color
     this.color = color;
     //sheep's size
@@ -128,6 +127,7 @@ class Sheep {
 
   isInMyView(point, angle, radius){
     let my_fwd = createVector(1, 0);
+
     my_fwd.rotate(this.rotation);
 
     let v = this.sub(point, this.pos);
@@ -139,15 +139,16 @@ class Sheep {
     let e = 0.001;
 
     if(last.mag() < e){
-      if(now.mag() >= e)
-        this.rotation = 90-atan2(now.x, now.y);
+
+      if(now.mag() > e) this.rotation = 90-atan2(now.x, now.y);
+
       return;
+
     }
 
     this.rotation += last.angleBetween(now);
 
-    if(this.rotation >= 360)
-      this.rotation = this.rotation %360;
+    if(this.rotation >= 360) this.rotation = this.rotation %360;
 
   }
 
@@ -186,6 +187,11 @@ class Sheep {
 
 ///////////// SEPARATION ///////////////////////////////////////////////////////
 
+  sepMoodFunction(p){
+    this.sep_mood = (this.sep_mood+random(1, 11)) % 10; //mod 10
+    return this.sep_mood % p == 0;
+  }
+
   computeSepM0(x, r, max, min){
     let e = -log(r/min, max);
 
@@ -199,8 +205,7 @@ class Sheep {
     let v = this.sub(this.pos, other.pos);
     let d = v.mag();
 
-    if(d < 0.0001) //overlapping
-        v = p5.Vector.random2D();
+    if(d < 0.0001) v = p5.Vector.random2D();
 
     v.setMag(d);
 
@@ -211,7 +216,7 @@ class Sheep {
     let desired = createVector(0, 0);
     let count = 0;
 
-    if(this.mood == 0) return desired;
+    if(this.sepMoodFunction(4)) return desired;
 
     for(let other of sheeps){
       if(!this.isInMyView(other.pos, 360, perception))
@@ -221,11 +226,12 @@ class Sheep {
       count++;
     }
 
-    if(count == 0)
-      return createVector(0, 0);
+    if(count == 0) return createVector(0, 0);
 
     desired.div(count);
+
     let m0 = this.computeSepM0(desired.mag(), perception, max_speed, dist_threshold);
+
     desired.limit(max_speed);
 
     desired.mult(m0*separationSlider.value()*(1-this.fear));
@@ -241,7 +247,9 @@ class Sheep {
       this.cohe_min_distance);
 
     let steer = this.sub(desired, this.velocities[idx]);
+
     steer.limit(this.force_limits[idx]);
+
     return steer;
   }
 
@@ -268,10 +276,10 @@ class Sheep {
     let desired = this.sub(pos, this.pos);
 
     let m0 = this.inverseSquareFunction(
-      desired.mag(),
-      800*this.size,
-      this.cohe_min_distance,
-      2);
+                      desired.mag(),
+                      800*this.size,
+                      this.cohe_min_distance,
+                      2);
 
     desired.normalize();
 
@@ -283,13 +291,9 @@ class Sheep {
 
   computeCoheSteer(sheeps, idx){
 
-    let steer;
-
-    if(sheeps.length == 0)
-      steer = this.sub(createVector(0,0),this.velocities[idx]);
-    else
-      steer = this.sub(
-                    this.computeCoheDesired(this.computeAvgPos(sheeps)),
+    let steer = sheeps.length == 0 ?
+          this.sub(createVector(0,0),this.velocities[idx]) :
+          this.sub(this.computeCoheDesired(this.computeAvgPos(sheeps)),
                     this.velocities[idx]);
 
     steer.limit(this.force_limits[idx]);
@@ -313,7 +317,7 @@ class Sheep {
     }
 
     if(count == 0)
-      return createVector(0, 0);
+      return desired;
 
     desired.div(count);
     desired.mult(this.fear);
@@ -339,19 +343,13 @@ class Sheep {
     if(!this.isInMyView(this.wolf, 360, this.perceptions[idx]))
       return createVector(0,0);
 
-    let m;
-
-    if(magnitude <= this.flee_min_perception){
-      m = this.speed_limits[idx];
-    } else {
-      m = map(
-        magnitude,
-        this.flee_min_perception,
-        this.perceptions[idx],
-        this.speed_limits[idx],
-        0);
-    }
-
+    let m = magnitude <= this.flee_min_perception ?
+          this.speed_limits[idx] :
+          map(magnitude,
+              this.flee_min_perception,
+              this.perceptions[idx],
+              this.speed_limits[idx],
+              0);
 
     direction.setMag(m);
     direction.mult(fleeSlider.value());
@@ -409,11 +407,11 @@ class Sheep {
 
     this.velocities[this.glob].limit(this.speed_limits[this.glob]*(1+this.fear/2));
 
-    this.velocities[this.glob].mult(1-this.drag);
-
     this.velocities[this.glob] = this.constrainVelocityAngle(
                                         createVector(1, 0).rotate(this.rotation),
                                         this.velocities[this.glob].copy());
+
+    this.velocities[this.glob].mult(1-this.drag);
 
     this.updateRotation(last_frame_velocity, this.velocities[this.glob].copy());
 
