@@ -13,11 +13,6 @@ function setup() {
 	separationSlider = createSlider(0, 1, 1, 0.1);
 	separationSlider.position(width-fleeSlider.width-30, 110);
 
-	sss = createSlider(0, 10, 0, 0.05);
-	sss.position(width-fleeSlider.width-30, 140);
-	sfs = createSlider(0, 10, 0, 0.05);
-	sfs.position(width-fleeSlider.width-30, 170);
-
 	frameRate(30);
 
 	let c = 8;
@@ -64,8 +59,6 @@ function draw() {
 	text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
   text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
   text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
-  text('speed '+sss.value(), width-fleeSlider.width-90, 155);
-	text('force '+sfs.value(), width-fleeSlider.width-85, 185);
 
 	sheeps.forEach((item, i) => {
 		item.draw()
