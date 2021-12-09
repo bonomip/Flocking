@@ -18,20 +18,20 @@ function setup() {
 	let c = 8;
 	let w = width/2;
 	let h = height/2;
-
+	var size = 0.1;
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
 			if(i == 0 && j == 0)
-				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.1, random(0, 360), true, "red"));
+				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
 			else
-				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, 0.1, random(0, 360), false));
+				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), false));
 		}
 	}
 }
 
 let lmx = 0;
 let lmy = 0;
-let vel = 5;
+let vel = 10;
 
 function draw() {
 	background(255);
