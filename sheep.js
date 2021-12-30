@@ -3,13 +3,15 @@ class Sheep {
   constructor(x,y, size, angle, debug, color = "black"){
     this.debug = debug;
 
+    //array of the sheeps that are
+    //close enought to be taken in cosideration
+    //by the collision algorithm
     this.cs = [];
-    this.cd = createVector(0, 0);
+
     //// TODO:  add mood for each sheep
     //to create diversity
     //the sheep is going to react based on the mood to different stimulus
-    //this.sep_mood = random(1, 11);
-    //this.flee_mood = random(0, 10);
+
     //sheep's color
     this.color = color;
     //sheep's size
@@ -33,9 +35,7 @@ class Sheep {
     // the minimum speed of the sheep when
     // it's new velocity is the inverse of last frame velocity
     this.min_a_speed = 0.2;
-    this.flee_min_perception = 300*size;
-    this.cohe_min_distance = 50*size;
-    this.separation_min_distance = this.size * 5;
+    
     this.collision_distance = this.w * 0.9;
     this.fear = 0;
 
@@ -122,35 +122,25 @@ class Sheep {
 
 ///////////// SEPARATION ///////////////////////////////////////////////////////
 
-  sepMoodFunction(){
-    return this.sep_mood % 4 == 0;
-  }
-
-  computeSepM0(x, r, max, min){
-    let e = -logb(r/min, max);
-
-    if(x < min)
-      return exp(min/r, e);
-    else
-      return exp(x/r, e);
-  }
-
   computeSepVector(other){
     let v = sub(this.pos, other.pos);
     let d = v.mag();
 
-    if(d < 0.0001) v = p5.Vector.random2D();
-
-    v.setMag(d);
+    if(d < 0.001) {
+      d = 0.001;
+      v = p5.Vector.random2D();
+      v.setMag(d);
+    }
 
     return v;
   }
 
+  //prc perception =~ max distance
+  //ms = max speed
+  // t = distance threshold =~ min distance
   computeSepDesired(sheeps, prc, ms, t){
     var desired = createVector(0, 0);
     var count = 0;
-
-    if(this.sepMoodFunction()) return desired;
 
     for( var i = 0; i < sheeps.length; i++ ){
       if(!this.isInMyView(sheeps[i].pos, 360, prc)){
@@ -166,11 +156,11 @@ class Sheep {
 
     desired.div(count);
 
-    let m0 = this.computeSepM0(desired.mag(), prc, ms, t);
-
-    desired.limit(ms);
+    var m0 = fadeOut(desired.mag(), prc, t, this.prms.fosp);
 
     desired.mult(m0*separationSlider.value()*(1-this.fear));
+
+    desired.limit(ms);
 
     return desired;
   }
@@ -181,7 +171,7 @@ class Sheep {
       sheeps,
       this.prms.prc(i),
       this.prms.sl(i),
-      this.cohe_min_distance);
+      this.prms.sdt);
     
     if(this.isAngleLessThen(
       createVector(1, 0).rotate(this.rotation),
@@ -199,6 +189,8 @@ class Sheep {
 
 
 ///////////// COHESION /////////////////////////////////////////////////////////
+
+  
 
   avgPos(sheeps){
     let avg_pos = createVector(0, 0);
@@ -219,15 +211,17 @@ class Sheep {
 
     let desired = sub(pos, this.pos);
 
-    let m0 = inverseSquareFunction(
+    let m0 = squash(
                       desired.mag(),
-                      800*this.size,
-                      this.cohe_min_distance,
-                      2);
+                      this.prms.prc(this.prms.c),
+                      this.prms.ctd,
+                      this.prms.sscf
+                    );
 
     desired.normalize();
 
     desired.mult(m0*this.fear*cohesionSlider.value());
+    
     desired.limit(this.prms.sl(i));
 
     return desired;
@@ -263,8 +257,9 @@ class Sheep {
       return desired;
 
     desired.div(count);
-    desired.mult(this.fear);
-    desired.mult(alignSlider.value());
+
+    desired.mult(this.fear*alignSlider.value());
+
     desired.limit(this.prms.sl(i));
 
     return desired;
@@ -286,16 +281,12 @@ class Sheep {
     if(!this.isInMyView(this.wolf, 360, this.prms.prc(i)))
       return createVector(0,0);
 
-    let m = magnitude <= this.flee_min_perception ?
-          this.prms.sl(i) :
-          map(magnitude,
-              this.flee_min_perception,
-              this.prms.prc(i),
-              this.prms.sl(i),
-              0);
+    var m0 = invSquash(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp)
+    //var m0 = fadeOut(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp);
 
-    direction.setMag(m);
-    direction.mult(fleeSlider.value());
+    direction.mult(m0*fleeSlider.value());
+
+    direction.limit(this.prms.sl(i));
 
     return direction;
   }
@@ -304,6 +295,7 @@ class Sheep {
     let desired = this.computeFleeDesired(direction, magnitude, i);
 
     let steer = sub(desired, this.prms.vel(i));
+
     steer.limit(this.prms.fl(i));
 
     return steer;
@@ -317,17 +309,22 @@ class Sheep {
       return;
 
     this.cd = createVector(0, 0);
-    var n = this.collision_distance;
-    var c = 0;
+    //threshold distance
+    var d = this.collision_distance;
+    var count = 0;
     for(var i = 0; i < this.cs.length; i++){
-      if(dist2(this.cs[i].pos, this.pos)<this.collision_distance){
+      //if there is a collision
+      if(dist2(this.cs[i].pos, this.pos)<d){
+        //compute vector from the other sheep to this
         var v = sub(this.pos, this.cs[i].pos);
-        v.setMag( ( 1 - ( v.mag() / n ) ) * n );
+        //squash it
+        v.setMag( ( 1 - ( v.mag() / d ) ) * d );
         this.cd.add(v);
-        c++;
+        count++;
       }
     }
 
+    if(count == 0 ) return;
 
     this.cd.div(this.cs.length);
     this.pos.add(this.cd);
@@ -447,7 +444,7 @@ class Sheep {
     circle(0, 0, this.collision_distance*2);
   }
 
-  drawPerception(i, r = 255, g = 0, b = 0,  a = 360){
+  /*drawPerception(i, r = 255, g = 0, b = 0,  a = 360){
     noFill();
     stroke(r, g, b);
 
@@ -469,7 +466,7 @@ class Sheep {
     } else {
       arc( 0, 0, this.prms.prc(i)*2, this.prms.prc(i)*2, -a, a, PIE );
     }
-  }
+  }*/
 
   drawVector(vector, color){ //DEBUg
     var v = vector.normalize()

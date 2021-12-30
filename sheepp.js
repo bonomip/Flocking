@@ -2,6 +2,23 @@ class SheepPrms{
 
   constructor(size){
 
+    //Squared Squash cohesion factor
+    this.sscf = 2;
+    //Cohesion threshold
+    this.ctd = 50*size;
+
+    //fade out separation parameter
+    this.fosp = 0.3;
+    //separation minimum distance threshold
+    this.sdt = size * 2;
+
+    //flee minimum distance trheshold
+    this.ftd = 300*size;
+    //flee inverse squash factor
+    this.fisp = 2;
+
+
+
     this.g = 0;
     this.f = 1;
     this.a = 2;
@@ -32,17 +49,18 @@ class SheepPrms{
                           0*size,   // 0 global perception //not used
                           3200*size,   // 1 flee perception
                           800*size,   // 2 align perception
-                          0*size,   // 3 cohesion perception
+                          800*size,   // 3 cohesion perception
+                                      //used for squared squash as max
                           200*size  // 4 separation perception
                         ];
     
     //speed limit
     this.asl = [
                           2,   // 0 global max speed;
-                          0.2,   // 1 flee max speed
-                          0.2,   // 2 align max speed
-                          0.2,   // 3 cohesion max speed
-                          0.2   // 4 separation max speed
+                          0.6,   // 1 flee max speed
+                          1.2,   // 2 align max speed
+                          1.6,   // 3 cohesion max speed
+                          1.2   // 4 separation max speed
                         ];
 
     //speed threshold

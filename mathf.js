@@ -22,13 +22,27 @@ function dot(v, w){
 	return p5.Vector.dot(v, w);
 }
 
+
+/* create inverse exponential function
+  computeSepM0(x, r, max, min){
+
+    //log di max in base r/min
+    let e = logb(max, r/min);
+
+    if(x < min)
+      return pow(min/r, e);
+    else
+      return pow(x/r, e);
+  }
+*/
+
 /**
 @param {float} d - Distance value
 @param {float} max - Distance's upper bound
 @param {float} min - Distance's lower bound
 @param {integer} e  -  Exponent
 */
-function inverseSquareFunction(d, max, min, e){
+function squash(d, max, min, e){
     if(d < min)
         return 0;
     if(d > max)
@@ -37,9 +51,29 @@ function inverseSquareFunction(d, max, min, e){
     return pow(d/max, e);
     }
 
+function invSquash(d, max, min, e){
+    return 1-squash(d, max, min, e);
+}
+
+function fadeOut(d, max, min, e){
+    if(d < min) return 1;
+    if(d >= max) return 0;
+
+    return exp(-e*d);
+}
+
     /**
     returns the logaritm with base b and argument x
     */
-function logb(b, x){
+function logb(x, b){
     return log(x) / log(b);
 }
+
+/*function linearInverse(x, n){
+    if(n <= 0) return 0;
+    if(x > n) return 0;
+    if(x < 0) return n;
+    
+    return ( 1 - ( x / n ) ) * n
+}
+*/
