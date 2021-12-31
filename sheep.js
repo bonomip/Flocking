@@ -138,7 +138,7 @@ class Sheep {
   //prc perception =~ max distance
   //ms = max speed
   // t = distance threshold =~ min distance
-  computeSepDesired(sheeps, prc, ms, t){
+  computeSepDesired(sheeps, prc, ms){
     var desired = createVector(0, 0);
     var count = 0;
 
@@ -156,7 +156,7 @@ class Sheep {
 
     desired.div(count);
 
-    var m0 = fadeOut(desired.mag(), prc, t, this.prms.fosp);
+    var m0 = fadeOut(desired.mag(), prc, this.prms.sdt, this.prms.fosp);
 
     desired.mult(m0*separationSlider.value()*(1-this.fear));
 
@@ -170,8 +170,7 @@ class Sheep {
     let desired = this.computeSepDesired(
       sheeps,
       this.prms.prc(i),
-      this.prms.sl(i),
-      this.prms.sdt);
+      this.prms.sl(i));
     
     if(this.isAngleLessThen(
       createVector(1, 0).rotate(this.rotation),

@@ -8,15 +8,14 @@ class SheepPrms{
     this.ctd = 50*size;
 
     //fade out separation parameter
-    this.fosp = 0.3;
+    this.fosp = 0.4;
     //separation minimum distance threshold
     this.sdt = size * 2;
 
     //flee minimum distance trheshold
-    this.ftd = 300*size;
+    this.ftd = 0;
     //flee inverse squash factor
-    this.fisp = 2;
-
+    this.fisp = 5;
 
 
     this.g = 0;
