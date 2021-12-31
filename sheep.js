@@ -1,6 +1,6 @@
 class Sheep {
 
-  constructor(x,y, size, angle, debug, color = "black"){
+  constructor(x,y, size, angle, debug, color = "dimgray"){
     this.debug = debug;
 
     //array of the sheeps that are
@@ -12,8 +12,6 @@ class Sheep {
     //to create diversity
     //the sheep is going to react based on the mood to different stimulus
 
-    //sheep's color
-    this.color = color;
     //sheep's size
     this.size = size;
     //body width
@@ -40,6 +38,16 @@ class Sheep {
     this.fear = 0;
 
     this.prms = new SheepPrms(size);
+
+    //sheep's color
+    this.color = color;
+
+    if(this.prms.ff >= 60)
+      this.color = "darkslategray";
+    
+    if (this.prms.ff <= 1)
+      this.color = "darkgray";
+
   }
 
   setWolf(x, y){
@@ -87,9 +95,18 @@ class Sheep {
   }
 
   computeFearFactor(r, d){
+      
+///0  1
+///10 1.2
+///20 1.4
+///40 1.6
+
+    if(d >= r)
+      return 0;
     angleMode(RADIANS);
-    let fear = atan((r-d)/20)/PI + 0.5;
+    var fear = atan((r-d)/this.prms.ff) / PI * 2 * (1 + this.prms.ff * 0.002);
     angleMode(DEGREES);
+
     return fear;
   }
 
@@ -426,7 +443,7 @@ class Sheep {
   }
 
   drawHead(f, w, s){
-    fill(120);
+    fill(255);
     noStroke();
     ellipseMode(CENTER);
     f.mult(w/3);

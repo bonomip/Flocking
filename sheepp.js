@@ -2,6 +2,12 @@ class SheepPrms{
 
   constructor(size){
 
+
+    this.ff = random(0.1, 41);
+    console.log(this.ff);
+    if(this.ff >= 30)
+      this.ff = random(20, 75);
+
     //Squared Squash cohesion factor
     this.sscf = 2;
     //Cohesion threshold

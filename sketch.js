@@ -21,9 +21,9 @@ function setup() {
 	var size = 0.1;
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
-			//if(i == 0 && j == 0) debug sheep
-			//	sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
-			//else
+			if(i == 0 && j == 0)
+				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
+			else
 				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), false));
 		}
 	}
@@ -34,7 +34,7 @@ let lmy = 0;
 let vel = 10;
 
 function draw() {
-	background(255);
+	background("bisque");
 
 	let p1 = createVector(lmx, lmy);
 	let p2 = createVector(mouseX, mouseY);
