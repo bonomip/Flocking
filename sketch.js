@@ -1,17 +1,23 @@
 let sheeps = [];
+let wolf_img;
+function preload() {
+	wolf_img = loadImage('res/wolf2.png');
+  }
 
 function setup() {
 	createCanvas(900, 680);
+
+	noCursor();
 	angleMode(DEGREES);
 
-	fleeSlider = createSlider(0, 1, 1, 0.1);
-	fleeSlider.position(width-fleeSlider.width-30, 20);
-	alignSlider = createSlider(0, 1, 1, 0.1);
-	alignSlider.position(width-fleeSlider.width-30, 50);
-	cohesionSlider = createSlider(0, 1, 1, 0.1);
-	cohesionSlider.position(width-fleeSlider.width-30, 80);
-	separationSlider = createSlider(0, 1, 1, 0.1);
-	separationSlider.position(width-fleeSlider.width-30, 110);
+	//fleeSlider = createSlider(0, 1, 1, 0.1);
+	//fleeSlider.position(width-fleeSlider.width-30, 20);
+	//alignSlider = createSlider(0, 1, 1, 0.1);
+	//alignSlider.position(width-fleeSlider.width-30, 50);
+	//cohesionSlider = createSlider(0, 1, 1, 0.1);
+	//cohesionSlider.position(width-fleeSlider.width-30, 80);
+	//separationSlider = createSlider(0, 1, 1, 0.1);
+	//separationSlider.position(width-fleeSlider.width-30, 110);
 
 	frameRate(30);
 
@@ -21,9 +27,9 @@ function setup() {
 	var size = 0.1;
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
-			if(i == 0 && j == 0)
-				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
-			else
+			//if(i == 0 && j == 0)
+			//	sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
+			//else
 				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), false));
 		}
 	}
@@ -51,14 +57,16 @@ function draw() {
 	lmx = p3.x;
 	lmy = p3.y;
 
-	noStroke();
-	fill("green");
-  circle(lmx, lmy, 20);
+	image(wolf_img, lmx, lmy, 30, 40);
 
-	text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
-	text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
-  text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
-  text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
+	//noStroke();
+	//fill("green");
+  	//circle(lmx, lmy, 20);
+
+	//text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
+	//text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
+  	//text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
+  	//text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
 
 	sheeps.forEach((item, i) => {
 		item.draw()
@@ -72,6 +80,7 @@ function draw() {
 	});
 }
 
+/*
 function debugAngle() {
   background(240);
   let v0 = createVector(100, 100);
@@ -121,3 +130,5 @@ function drawArrow(base, vec, myColor) {
   triangle(0, arrowSize / 2, 0, -arrowSize / 2, arrowSize, 0);
   pop();
 }
+
+*/

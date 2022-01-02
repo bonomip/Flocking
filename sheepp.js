@@ -3,11 +3,18 @@ class SheepPrms{
   constructor(size){
 
 
+    //fear factor m
     this.ff = random(0.1, 41);
-    console.log(this.ff);
+
     if(this.ff >= 30)
       this.ff = random(20, 75);
 
+    // fear factor "m" pre computation
+    this.ffpc2 = 1 / PI * 2 * (1 + this.ff * 0.002);
+    this.ffpc1 = 1 / this.ff;
+
+    //flee perception bias
+    this.fpb = 1-random(-0.05, 0.05 );
     //Squared Squash cohesion factor
     this.sscf = 2;
     //Cohesion threshold
@@ -46,13 +53,12 @@ class SheepPrms{
                           createVector(0, 0),   // 2 align acceleration
                           createVector(0, 0),   // 3 cohesion acceleration
                           createVector(0, 0)    // 4 separation acceleration
-
                           ];
 
     //perceptions                      
     this.aprc = [
                           0*size,   // 0 global perception //not used
-                          3200*size,   // 1 flee perception
+                          3200*size*this.fpb,   // 1 flee perception
                           800*size,   // 2 align perception
                           800*size,   // 3 cohesion perception
                                       //used for squared squash as max

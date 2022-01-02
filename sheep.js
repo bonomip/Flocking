@@ -95,18 +95,16 @@ class Sheep {
   }
 
   computeFearFactor(r, d){
-      
-///0  1
-///10 1.2
-///20 1.4
-///40 1.6
-
     if(d >= r)
       return 0;
     angleMode(RADIANS);
-    var fear = atan((r-d)/this.prms.ff) / PI * 2 * (1 + this.prms.ff * 0.002);
+    //this is the complete formula, but in order to seep up the computation
+    // the division is pre computed and transformed in a multiplication
+    // following the relationship x/y == x * 1/y
+    //given that if 1/y is precumputed its necessary to only apply the multiplication. 
+    //var fear = atan((r-d)/this.prms.ff) / PI * 2 * (1 + this.prms.ff * 0.002);
+    var fear = atan((r-d)*this.prms.ffpc1) * this.prms.ffpc2;
     angleMode(DEGREES);
-
     return fear;
   }
 
@@ -175,7 +173,7 @@ class Sheep {
 
     var m0 = fadeOut(desired.mag(), prc, this.prms.sdt, this.prms.fosp);
 
-    desired.mult(m0*separationSlider.value()*(1-this.fear));
+    desired.mult(m0*(1-this.fear));
 
     desired.limit(ms);
 
@@ -236,7 +234,7 @@ class Sheep {
 
     desired.normalize();
 
-    desired.mult(m0*this.fear*cohesionSlider.value());
+    desired.mult(m0*this.fear);
     
     desired.limit(this.prms.sl(i));
 
@@ -274,7 +272,7 @@ class Sheep {
 
     desired.div(count);
 
-    desired.mult(this.fear*alignSlider.value());
+    desired.mult(this.fear);
 
     desired.limit(this.prms.sl(i));
 
@@ -298,9 +296,8 @@ class Sheep {
       return createVector(0,0);
 
     var m0 = invSquash(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp)
-    //var m0 = fadeOut(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp);
 
-    direction.mult(m0*fleeSlider.value());
+    direction.mult(m0*this.fear);
 
     direction.limit(this.prms.sl(i));
 
