@@ -37,15 +37,20 @@ function setup() {
 
 let lmx = 0;
 let lmy = 0;
-let vel = 10;
+let vel = 8;
 
 function draw() {
 	background("bisque");
 
+	push();
+	noStroke();
+	fill(255, 165);
+	circle(mouseX, mouseY, 20);
+	pop();
+
 	let p1 = createVector(lmx, lmy);
 	let p2 = createVector(mouseX, mouseY);
 	let p3;
-
 	let v = p5.Vector.sub(p2, p1);
 	if(v.mag() > vel){
 		v.setMag(vel);
@@ -53,11 +58,6 @@ function draw() {
 	} else {
 		p3 = p2;
 	}
-
-	lmx = p3.x;
-	lmy = p3.y;
-
-	image(wolf_img, lmx, lmy, 30, 40);
 
 	//noStroke();
 	//fill("green");
@@ -78,6 +78,15 @@ function draw() {
 		item.applyBehaviours();
 		item.bounds();
 	});
+
+	
+	lmx = p3.x;
+	lmy = p3.y;
+	var wolf_w = 30;
+	var wolf_h = 40;
+	image(wolf_img, lmx-wolf_w/2, lmy-wolf_h/2, wolf_w, wolf_h);
+
+
 }
 
 /*

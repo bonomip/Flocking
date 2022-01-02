@@ -4,10 +4,14 @@ class SheepPrms{
 
 
     //fear factor m
+    /*
+     an higher fear factor (> 30 )rep. an adult male
+      so its less scary from wolf and has an heighr speed
+    */
     this.ff = random(0.1, 41);
-
-    if(this.ff >= 30)
+    if(this.ff >= 30) //adult 
       this.ff = random(20, 75);
+
 
     // fear factor "m" pre computation
     this.ffpc2 = 1 / PI * 2 * (1 + this.ff * 0.002);
@@ -65,9 +69,8 @@ class SheepPrms{
                           200*size  // 4 separation perception
                         ];
     
-    //speed limit
     this.asl = [
-                          2,   // 0 global max speed;
+                          1.75+(this.ff/100),   // 0 global max speed;
                           0.6,   // 1 flee max speed
                           1.2,   // 2 align max speed
                           1.6,   // 3 cohesion max speed
@@ -109,11 +112,6 @@ class SheepPrms{
     for(let i = 0; i < this.avel.length; i++)
       if(this.avel[i].mag() <= this.ast[i])
         this.avel[i].mult(0);
-  }
-
-  reset(){
-    for(let i = 0; i < this.aacc.length; i++ )
-        this.aacc[i].mult(0);
   }
 
   ///// GET
@@ -164,8 +162,8 @@ class SheepPrms{
 
   // LIMIT
 
-  limitVel(i, f){
-    this.avel[i].limit(this.asl[i]*f)
+  limitVel(i, m){
+    this.avel[i].limit(this.asl[i]*m)
   }
 
 }

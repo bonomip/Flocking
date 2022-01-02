@@ -27,7 +27,7 @@ class Sheep {
     //sheep's angle of view
     this.p_angle = 75;
     //drag
-    this.drag = 0.1;
+    this.drag = random(0.08, 0.12);
     //sheep's max steering angle
     this.s_angle = 5;
     // the minimum speed of the sheep when
@@ -67,6 +67,10 @@ class Sheep {
       this.pos.y = 0+this.w/2;
   }
 
+  isInMyRadius(point, radius){
+    return (dist2(point, this.pos) < radius);
+  }
+
   isInMyView(point, angle, radius){
     let my_fwd = createVector(1, 0);
 
@@ -74,7 +78,7 @@ class Sheep {
 
     let v = sub(point, this.pos);
 
-    return (abs(my_fwd.angleBetween(v)) <= angle) && (dist2(point, this.pos) < radius);
+    return (abs(my_fwd.angleBetween(v)) <= angle) && this.isInMyRadius(point, radius);
   }
 
   updateRotation(last, now){
@@ -158,7 +162,7 @@ class Sheep {
     var count = 0;
 
     for( var i = 0; i < sheeps.length; i++ ){
-      if(!this.isInMyView(sheeps[i].pos, 360, prc)){
+      if(!this.isInMyView(sheeps[i].pos, 225, prc)){
         sheeps.splice(i, 1);
         i--;
         continue;
@@ -292,7 +296,7 @@ class Sheep {
 
   computeFleeDesired(direction, magnitude, i){
 
-    if(!this.isInMyView(this.wolf, 360, this.prms.prc(i)))
+    if(!this.isInMyRadius(this.wolf, this.prms.prc(i)))
       return createVector(0,0);
 
     var m0 = invSquash(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp)
@@ -381,7 +385,7 @@ class Sheep {
 
     this.prms.step();
 
-    this.prms.limitVel(this.prms.g, 1+this.fear/2);
+    this.prms.limitVel(this.prms.g, 1+this.fear);
     
     this.prms.sgvel(
         this.constrainVelocityAngle(
@@ -396,8 +400,6 @@ class Sheep {
     this.prms.threshold()
 
     this.pos.add(this.prms.gvel());
-
-    this.prms.reset();
 
     for(var i = 0; i < 5; i++)
       this.collisions();
