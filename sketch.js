@@ -9,7 +9,8 @@ function b(){
 }
 
 function setup() {
-	createCanvas(900, 680);
+	//createCanvas(900, 680);
+	createCanvas(windowWidth, windowHeight);
 
 	noCursor();
 	angleMode(DEGREES);
@@ -25,7 +26,7 @@ function setup() {
 
 	frameRate(30);
 
-	let c = 10;
+	let c = 8;
 	let w = width/2;
 	let h = height/2;
 	var size = 0.1;
