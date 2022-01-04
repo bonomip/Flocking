@@ -25,11 +25,11 @@ class Sheep {
     //current position
     this.pos = createVector(x, y);
     //sheep's angle of view
-    this.p_angle = 75;
+    this.p_angle = 275;
     //drag
     this.drag = random(0.08, 0.12);
     //sheep's max steering angle
-    this.s_angle = 5;
+    this.s_angle = 7;
     // the minimum speed of the sheep when
     // it's new velocity is the inverse of last frame velocity
     this.min_a_speed = 0.2;
@@ -48,6 +48,10 @@ class Sheep {
     if (this.prms.ff <= 1)
       this.color = "darkgray";
 
+  }
+
+  forward(){
+    return createVector(1, 0).rotate(this.rotation);
   }
 
   setWolf(x, y){
@@ -122,19 +126,19 @@ class Sheep {
     @param {P5.Vector} fwd - Sheep's forward Vector
     @param {P5.Vector} vel - Sheep's velocity [PASS IT BY COPY!]
   */
-  constrainVelocityAngle(fwd, vel){
+  constrainVelocityAngle(fwd, vel, a, min_speed){
     let alpha = fwd.angleBetween(vel);
 
-    if(isNaN(alpha) || abs(alpha) <= this.s_angle ) //if alpha is NaN so vel is 0, 0, 0;
+    if(isNaN(alpha) || abs(alpha) <= a ) //if alpha is NaN so vel is 0, 0, 0;
       return vel;
 
-    let m = map(abs(alpha), this.s_angle, 180, vel.mag(), this.min_a_speed);
+    let m = map(abs(alpha), a, 180, vel.mag(), min_speed);
     vel.setMag(m);
 
     if(alpha < 0)
-      vel.rotate(-alpha-this.s_angle);
+      vel.rotate(-alpha-a);
     else
-      vel.rotate(-alpha+this.s_angle);
+      vel.rotate(-alpha+a);
 
     return vel;
   }
@@ -162,7 +166,7 @@ class Sheep {
     var count = 0;
 
     for( var i = 0; i < sheeps.length; i++ ){
-      if(!this.isInMyView(sheeps[i].pos, 225, prc)){
+      if(!this.isInMyView(sheeps[i].pos, this.p_angle, prc)){
         sheeps.splice(i, 1);
         i--;
         continue;
@@ -190,13 +194,12 @@ class Sheep {
       sheeps,
       this.prms.prc(i),
       this.prms.sl(i));
-    
-    if(this.isAngleLessThen(
-      createVector(1, 0).rotate(this.rotation),
-      desired,
-      this.s_angle)){
-        desired.mult(0);
-    }
+
+    //var a = 360*this.fear;
+    var a = 25;
+    var b = 45;
+    if( !this.isAngleLessThen( this.forward(), desired, a) )
+        desired = this.constrainVelocityAngle(this.forward(), desired, b, 0);    
 
     let steer = sub(desired, this.prms.vel(i));
 
@@ -215,6 +218,8 @@ class Sheep {
     let count = 0;
 
     for(let other of sheeps){
+      if(!this.isInMyView(other.pos, this.p_angle, 3000*this.size))
+        continue;
       avg_pos.add(other.pos);
       count++;
     }
@@ -296,10 +301,10 @@ class Sheep {
 
   computeFleeDesired(direction, magnitude, i){
 
-    if(!this.isInMyRadius(this.wolf, this.prms.prc(i)))
+    if(!this.isInMyView(this.wolf, this.p_angle, this.prms.prc(i)))
       return createVector(0,0);
 
-    var m0 = invSquash(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp)
+    var m0 = negSquash(magnitude, this.prms.prc(i), this.prms.ftd, this.prms.fisp)
 
     direction.mult(m0*this.fear);
 
@@ -334,8 +339,7 @@ class Sheep {
       if(dist2(this.cs[i].pos, this.pos)<d){
         //compute vector from the other sheep to this
         var v = sub(this.pos, this.cs[i].pos);
-        //squash it
-        v.setMag( ( 1 - ( v.mag() / d ) ) * d );
+        v.mult(negSquash(v.mag(), d, 0, 2));
         this.cd.add(v);
         count++;
       }
@@ -364,6 +368,9 @@ class Sheep {
     //magitude of that vector
     let m = v.mag();
 
+    //to improve the speed start using the rule with widher radius,
+    // removing from the list distant sheeps
+
     this.fear = this.computeFearFactor(this.prms.prc(this.prms.f), m);
 
     //passing v, m so i dont have to compute them twice ;)
@@ -389,8 +396,10 @@ class Sheep {
     
     this.prms.sgvel(
         this.constrainVelocityAngle(
-            createVector(1, 0).rotate(this.rotation),
-            this.prms.gvel())
+            this.forward(),
+            this.prms.gvel(),
+            this.s_angle,
+            0)
     );
     
     this.prms.sgvel(this.prms.gvel().mult(1-this.drag));
@@ -411,34 +420,19 @@ class Sheep {
 ////////////////////////////////////////////////////////////////////////////////
 
   draw(alpha){
-
     push();
     translate(this.pos.x, this.pos.y);
     rotate(this.rotation);
     this.drawBody(this.w, this.h);
     this.drawHead(createVector(1,0), this.w, this.c);
-    if(this.debug){
-      this.drawCollison();
-      
-  }
-
     pop();
-
-    //this.drawVector(this.cd, color(200,200,200));
-  
-
   }
 
   drawBody(w, h){
-    //body as rectangle
     fill(this.color);
     noStroke();
     rectMode(CENTER);
     rect(0, 0, w, h);
-
-    /*fill(this.color);
-    noStroke();
-    circle(0, 0, this.w);*/
   }
 
   drawHead(f, w, s){
@@ -447,54 +441,5 @@ class Sheep {
     ellipseMode(CENTER);
     f.mult(w/3);
     circle(f.x, f.y, s);
-  }
-
-
-///////// DEBUG ////////////////////////////////////////////////////////////////
-
-  drawCollison(){
-    fill(color(120,120,120, 50));
-    noStroke();
-    ellipseMode(CENTER);
-    circle(0, 0, this.collision_distance*2);
-  }
-
-  /*drawPerception(i, r = 255, g = 0, b = 0,  a = 360){
-    noFill();
-    stroke(r, g, b);
-
-    if(a == 360){
-      circle(0, 0, this.prms.prc(i)*2);
-
-      if(i == this.prms.s){
-        stroke(r/2, g/2, b/2);
-        circle(0, 0, this.separation_min_distance*2);
-      }
-      if(i == this.prms.f){
-        stroke(r/2, g/2, b/2);
-        circle(0, 0, this.flee_min_perception*2);
-      }
-      if(i == this.prms.c){
-        stroke(r/2, g/2, b/2);
-        circle(0, 0, this.cohe_min_distance*2);
-      }
-    } else {
-      arc( 0, 0, this.prms.prc(i)*2, this.prms.prc(i)*2, -a, a, PIE );
-    }
-  }*/
-
-  drawVector(vector, color){ //DEBUg
-    var v = vector.normalize()
-    if(v.mag() < 0.001) return;
-      drawArrow(this.pos, v, color);
-  }
-
-  drawDesired(){
-    let c1 = createVector(width/2,height/2);
-    let c2 = createVector(width/2,height/2);
-    let m1 = createVector(100, 0);
-
-    drawArrow(c1, m1, "blue");
-    drawArrow(c1, m1.rotate(this.rotation), "green");
   }
 }

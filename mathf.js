@@ -51,7 +51,7 @@ function squash(d, max, min, e){
     return pow(d/max, e);
     }
 
-function invSquash(d, max, min, e){
+function negSquash(d, max, min, e){
     return 1-squash(d, max, min, e);
 }
 

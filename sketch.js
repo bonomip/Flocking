@@ -4,6 +4,10 @@ function preload() {
 	wolf_img = loadImage('res/wolf2.png');
   }
 
+function b(){
+	return random(-2, 2);
+}
+
 function setup() {
 	createCanvas(900, 680);
 
@@ -21,18 +25,24 @@ function setup() {
 
 	frameRate(30);
 
-	let c = 8;
+	let c = 10;
 	let w = width/2;
 	let h = height/2;
 	var size = 0.1;
+	var sheep_count = 0;
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
 			//if(i == 0 && j == 0)
 			//	sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
 			//else
-				sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), false));
+				sheep_count++;
+				var i0 = c/2 + b();//i + b();
+				var j0 = c/2 + b();//j + b();
+				sheeps.push(new Sheep((w/c * i0) + w/2, (h/c *j0) + h/2, size, random(0, 360), false));
 		}
 	}
+
+	console.log("Number of sheep "+sheep_count);
 }
 
 let lmx = 0;
