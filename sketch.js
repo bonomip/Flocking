@@ -9,8 +9,11 @@ function b(){
 }
 
 function setup() {
-	//createCanvas(900, 680);
-	createCanvas(windowWidth, windowHeight);
+	var ww = windowWidth*0.9;
+	var wh = windowHeight*0.9;
+	var pixels = ww*wh;  
+	let cnv = createCanvas(ww, wh);
+	cnv.position(windowWidth*0.05, windowHeight*0.05);
 
 	noCursor();
 	angleMode(DEGREES);
@@ -26,7 +29,12 @@ function setup() {
 
 	frameRate(30);
 
-	let c = 8;
+
+
+	let c = ceil(map(pixels, 100000, 500000, 4, 10));
+	c = c > 10 ? 10 : c;
+	c = c < 1 ? 1 : c;
+
 	let w = width/2;
 	let h = height/2;
 	var size = 0.1;
@@ -44,6 +52,7 @@ function setup() {
 	}
 
 	console.log("Number of sheep "+sheep_count);
+	console.log("Number of pixels "+pixels);
 }
 
 let lmx = 0;
