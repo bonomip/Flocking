@@ -7,6 +7,8 @@ let wolf_h;
 let low_b = 200*200;
 let high_b = 800*800;
 let cnv;
+let lmx = 0;
+let lmy = 0;
 
 function preload() {
 	wolf_img = loadImage('res/wolf2.png');
@@ -74,6 +76,9 @@ function reset(first){
 		}
 	}
 
+	lmx = 0;
+	lmy = 0;
+
 	console.log("Number of sheep "+sheep_count);
 	console.log("grid dimension "+c);
 	console.log("sheep size "+size);
@@ -85,9 +90,6 @@ function setup() {
 	angleMode(DEGREES);
 	frameRate(30);
 }
-
-let lmx = 0;
-let lmy = 0;
 
 function draw() {
 	background("bisque");
