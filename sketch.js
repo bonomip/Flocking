@@ -13,9 +13,14 @@ function b(){
 	return random(-2*scaling, 2*scaling);
 }
 
+function border(){
+	return windowHeight > windowWidth ? windowWidth*0.8 : windowHeight*0.8;
+}
+
 function setup() {
-	var ww = windowWidth*0.8;
-	var wh = windowHeight*0.8;
+	var b = border();
+	var ww = windowWidth-b;
+	var wh = windowHeight-b;
 	var low_b = 200*200;
 	var high_b = 800*800;
 	var pixels = ww*wh;
@@ -28,7 +33,7 @@ function setup() {
 		pixels = high_b;
 	}  
 	let cnv = createCanvas(ww, wh);
-	cnv.position(windowWidth*0.1, windowHeight*0.1);
+	cnv.position(windowWidth-(border/2), windowHeight-(border/2));
 
 	noCursor();
 	angleMode(DEGREES);
