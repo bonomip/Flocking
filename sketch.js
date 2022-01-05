@@ -14,13 +14,13 @@ function b(){
 }
 
 function border(){
-	return windowHeight > windowWidth ? windowWidth*0.8 : windowHeight*0.8;
+	return windowHeight > windowWidth ? windowWidth*0.2 : windowHeight*0.2;
 }
 
 function setup() {
-	var b = border();
-	var ww = windowWidth-b;
-	var wh = windowHeight-b;
+	var brd = border();
+	var ww = windowWidth-brd;
+	var wh = windowHeight-brd;
 	var low_b = 200*200;
 	var high_b = 800*800;
 	var pixels = ww*wh;
@@ -33,7 +33,7 @@ function setup() {
 		pixels = high_b;
 	}  
 	let cnv = createCanvas(ww, wh);
-	cnv.position(windowWidth-(border/2), windowHeight-(border/2));
+	cnv.position(brd/2, brd/2);
 
 	noCursor();
 	angleMode(DEGREES);
@@ -42,9 +42,9 @@ function setup() {
 
 	scaling = map(pixels, low_b, high_b, 0, 1);
 
-	vel = 12*scaling;
-	wolf_w = 30*scaling;
-	wolf_h = 40*scaling;
+	vel = (10*scaling)+1.25;
+	wolf_w = (28*scaling)+2;
+	wolf_h = (38*scaling)+2;
 	console.log("wolf velocity "+vel);
 
 
@@ -83,7 +83,7 @@ function draw() {
 	push();
 	noStroke();
 	fill(255, 165);
-	circle(mouseX, mouseY, 20*scaling);
+	circle(mouseX, mouseY, (18*scaling)+2);
 	pop();
 
 	let p1 = createVector(lmx, lmy);
