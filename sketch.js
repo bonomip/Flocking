@@ -9,11 +9,11 @@ function b(){
 }
 
 function setup() {
-	var ww = windowWidth*0.9;
-	var wh = windowHeight*0.9;
+	var ww = windowWidth*0.8;
+	var wh = windowHeight*0.8;
 	var pixels = ww*wh;  
 	let cnv = createCanvas(ww, wh);
-	cnv.position(windowWidth*0.05, windowHeight*0.05);
+	cnv.position(windowWidth*0.1, windowHeight*0.1);
 
 	noCursor();
 	angleMode(DEGREES);
