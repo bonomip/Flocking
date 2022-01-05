@@ -4,6 +4,9 @@ let scaling;
 let vel;
 let wolf_w;
 let wolf_h;
+let low_b = 200*200;
+let high_b = 800*800;
+let cnv;
 
 function preload() {
 	wolf_img = loadImage('res/wolf2.png');
@@ -17,41 +20,45 @@ function border(){
 	return windowHeight > windowWidth ? windowWidth*0.2 : windowHeight*0.2;
 }
 
-function setup() {
+function windowResized() {
+	reset(false);
+}
+
+function reset(first){
+	if(!first)
+		console.log("------ RESIZE ---------");
 	var brd = border();
 	var ww = windowWidth-brd;
 	var wh = windowHeight-brd;
-	var low_b = 200*200;
-	var high_b = 800*800;
-	var pixels = ww*wh;
 
+	if(first)
+		cnv = createCanvas(ww, wh);
+	else
+		resizeCanvas(ww, wh);
 
-	if(pixels < low_b){
-		pixels = low_b;
-	}
-	if(pixels > high_b){
-		pixels = high_b;
-	}  
-	let cnv = createCanvas(ww, wh);
 	cnv.position(brd/2, brd/2);
-
-	noCursor();
-	angleMode(DEGREES);
-
-	frameRate(30);
-
+	
+	var pixels = ww*wh;
+	if(pixels < low_b)
+		pixels = low_b;
+	if(pixels > high_b)
+		pixels = high_b; 
+	console.log("Number of pixels "+pixels);
+	
 	scaling = map(pixels, low_b, high_b, 0, 1);
-
+	
 	vel = (10*scaling)+1.25;
 	wolf_w = (28*scaling)+2;
 	wolf_h = (38*scaling)+2;
 	console.log("wolf velocity "+vel);
+	console.log("Scaling factor "+scaling);
 
+	if(!first)
+		sheeps = [];
 
 	let c = ceil(scaling * 10)+3;
 	c = c > 10 ? 10 : c;
 	var size = 0.01+(0.09 * scaling);
-
 	let w = width/2;
 	let h = height/2;
 	var sheep_count = 0;
@@ -68,10 +75,15 @@ function setup() {
 	}
 
 	console.log("Number of sheep "+sheep_count);
-	console.log("Scaling factor "+scaling);
-	console.log("Number of pixels "+pixels);
 	console.log("grid dimension "+c);
 	console.log("sheep size "+size);
+}
+
+function setup() {
+	reset(true);
+	noCursor();
+	angleMode(DEGREES);
+	frameRate(30);
 }
 
 let lmx = 0;
