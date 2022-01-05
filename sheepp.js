@@ -18,7 +18,7 @@ class SheepPrms{
     this.ffpc1 = 1 / this.ff;
 
     //flee perception bias
-    this.fpb = 1-random(-0.05, 0.05 );
+    this.fpb = 1-random(-0.5*size, 0.5*size );
     //Squared Squash cohesion factor
     this.sscf = 2;
     //Cohesion threshold
@@ -27,7 +27,7 @@ class SheepPrms{
     //fade out separation parameter
     this.fosp = 0.4;
     //separation minimum distance threshold
-    this.sdt = size * 2;
+    this.sdt = 2*size;
 
     //flee minimum distance trheshold
     this.ftd = 0;
@@ -70,31 +70,31 @@ class SheepPrms{
                         ];
     
     this.asl = [
-                          1.75+(this.ff/100),   // 0 global max speed;
-                          0.6,   // 1 flee max speed
-                          1.2,   // 2 align max speed
-                          1.6,   // 3 cohesion max speed
-                          1.2   // 4 separation max speed
+                          (17.5+(this.ff/100))*size,   // 0 global max speed;
+                          6*size,   // 1 flee max speed
+                          12*size,   // 2 align max speed
+                          16*size,   // 3 cohesion max speed
+                          12*size   // 4 separation max speed
                         ];
 
     //speed threshold
     this.ast = [
-                              0.01,  // 0 global min speed;
-                              0.01,   // 1 flee min speed
-                              0.01,   // 2 align min speed
-                              0.01,   // 3 cohesion min speed
-                              0.01,  // 4 separation min speed
-                              0.01 // collision min speed
+                              0.1*size,  // 0 global min speed;
+                              0.1*size,   // 1 flee min speed
+                              0.1*size,   // 2 align min speed
+                              0.1*size,   // 3 cohesion min speed
+                              0.1*size,  // 4 separation min speed
+                              0.1*size // collision min speed
                                   ];
 
     //force limits
     this.afl = [
-                          0.2,  // 0 global max froce
-                          0.2,   // 1 flee max froce
-                          0.2,   // 2 align max froce
-                          0.2,   // 3 cohesion max froce
-                          0.2,  // 4 separation max froce
-                          0.2 // collision
+                          2*size,  // 0 global max froce
+                          2*size,   // 1 flee max froce
+                          2*size,   // 2 align max froce
+                          2*size,   // 3 cohesion max froce
+                          2*size,  // 4 separation max froce
+                          2*size // collision
                             ];
   }
 

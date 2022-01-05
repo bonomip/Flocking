@@ -1,43 +1,54 @@
 let sheeps = [];
 let wolf_img;
+let scaling;
+let vel;
+let wolf_w;
+let wolf_h;
+
 function preload() {
 	wolf_img = loadImage('res/wolf2.png');
   }
 
 function b(){
-	return random(-2, 2);
+	return random(-2*scaling, 2*scaling);
 }
 
 function setup() {
 	var ww = windowWidth*0.8;
 	var wh = windowHeight*0.8;
-	var pixels = ww*wh;  
+	var low_b = 200*200;
+	var high_b = 800*800;
+	var pixels = ww*wh;
+
+
+	if(pixels < low_b){
+		pixels = low_b;
+	}
+	if(pixels > high_b){
+		pixels = high_b;
+	}  
 	let cnv = createCanvas(ww, wh);
 	cnv.position(windowWidth*0.1, windowHeight*0.1);
 
 	noCursor();
 	angleMode(DEGREES);
 
-	//fleeSlider = createSlider(0, 1, 1, 0.1);
-	//fleeSlider.position(width-fleeSlider.width-30, 20);
-	//alignSlider = createSlider(0, 1, 1, 0.1);
-	//alignSlider.position(width-fleeSlider.width-30, 50);
-	//cohesionSlider = createSlider(0, 1, 1, 0.1);
-	//cohesionSlider.position(width-fleeSlider.width-30, 80);
-	//separationSlider = createSlider(0, 1, 1, 0.1);
-	//separationSlider.position(width-fleeSlider.width-30, 110);
-
 	frameRate(30);
 
+	scaling = map(pixels, low_b, high_b, 0, 1);
+
+	vel = 12*scaling;
+	wolf_w = 30*scaling;
+	wolf_h = 40*scaling;
+	console.log("wolf velocity "+vel);
 
 
-	let c = ceil(map(pixels, 100000, 500000, 4, 10));
+	let c = ceil(scaling * 10)+3;
 	c = c > 10 ? 10 : c;
-	c = c < 1 ? 1 : c;
+	var size = 0.01+(0.09 * scaling);
 
 	let w = width/2;
 	let h = height/2;
-	var size = 0.1;
 	var sheep_count = 0;
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
@@ -52,12 +63,14 @@ function setup() {
 	}
 
 	console.log("Number of sheep "+sheep_count);
+	console.log("Scaling factor "+scaling);
 	console.log("Number of pixels "+pixels);
+	console.log("grid dimension "+c);
+	console.log("sheep size "+size);
 }
 
 let lmx = 0;
 let lmy = 0;
-let vel = 8;
 
 function draw() {
 	background("bisque");
@@ -65,28 +78,20 @@ function draw() {
 	push();
 	noStroke();
 	fill(255, 165);
-	circle(mouseX, mouseY, 20);
+	circle(mouseX, mouseY, 20*scaling);
 	pop();
 
 	let p1 = createVector(lmx, lmy);
 	let p2 = createVector(mouseX, mouseY);
 	let p3;
 	let v = p5.Vector.sub(p2, p1);
+
 	if(v.mag() > vel){
 		v.setMag(vel);
 		p3 = p5.Vector.add(p1, v);
 	} else {
 		p3 = p2;
 	}
-
-	//noStroke();
-	//fill("green");
-  	//circle(lmx, lmy, 20);
-
-	//text('flee '+fleeSlider.value(), width-fleeSlider.width-65, 35);
-	//text('align '+alignSlider.value(), width-fleeSlider.width-70, 65);
-  	//text('cohesion '+cohesionSlider.value(), width-fleeSlider.width-93, 95);
-  	//text('separation '+separationSlider.value(), width-fleeSlider.width-100, 125);
 
 	sheeps.forEach((item, i) => {
 		item.draw()
@@ -99,14 +104,10 @@ function draw() {
 		item.bounds();
 	});
 
-	
 	lmx = p3.x;
 	lmy = p3.y;
-	var wolf_w = 30;
-	var wolf_h = 40;
+
 	image(wolf_img, lmx-wolf_w/2, lmy-wolf_h/2, wolf_w, wolf_h);
-
-
 }
 
 /*

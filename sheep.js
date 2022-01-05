@@ -27,14 +27,14 @@ class Sheep {
     //sheep's angle of view
     this.p_angle = 275;
     //drag
-    this.drag = random(0.08, 0.12);
+    this.drag = 0.1;
     //sheep's max steering angle
     this.s_angle = 7;
     // the minimum speed of the sheep when
     // it's new velocity is the inverse of last frame velocity
-    this.min_a_speed = 0.2;
+    this.min_a_speed = 2*size;
     
-    this.collision_distance = this.w * 0.9;
+    this.collision_distance = this.w*0.9;
     this.fear = 0;
 
     this.prms = new SheepPrms(size);
