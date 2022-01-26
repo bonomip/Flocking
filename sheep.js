@@ -1,7 +1,7 @@
 class Sheep {
 
-  constructor(x,y, size, angle, debug, color = "dimgray"){
-    this.debug = debug;
+  constructor(x,y, size, angle, color = "dimgray"){
+    this.debug = false;
 
     //array of the sheeps that are
     //close enought to be taken in cosideration
@@ -48,6 +48,11 @@ class Sheep {
     if (this.prms.ff <= 1)
       this.color = "darkgray";
 
+  }
+
+  setDebug(bool){
+    this.debug = bool;
+    this.color = "red";
   }
 
   forward(){
@@ -116,7 +121,6 @@ class Sheep {
     return fear;
   }
 
-
   isAngleLessThen(fwd, v, a){
     var b = fwd.angleBetween(v);
     return isNaN(b)|| (abs(b) <= a); 
@@ -142,6 +146,44 @@ class Sheep {
 
     return vel;
   }
+
+////////////////////////// BOUNDS /////////////////////////////////////////////
+
+
+computeSteerBounds(i){
+  var t = this.prms.prc(i);
+
+  var d = [
+    width - this.pos.x,
+    this.pos.x,
+    this.pos.y,
+    height - this.pos.y
+  ];
+  var v = [
+    createVector(-1, 0),
+    createVector(1, 0),
+    createVector(0, 1),
+    createVector(0, -1)
+  ];
+
+  var desired = createVector(0,0);
+
+  for(var j = 0; j < d.length; j++){
+    if(d[j] < t){
+      var m0 = fadeOut(d[j], t, 0, 0.4);
+      
+      desired.add( add(v[j].mult( m0 * 100 ), this.prms.gvel()));
+    }
+  }
+
+  desired.limit(this.prms.sl(i));
+
+  var steer = sub(desired, this.prms.vel(i));
+
+  steer.limit(this.prms.fl(i));
+
+  return steer;
+ }
 
 ///////////// SEPARATION ///////////////////////////////////////////////////////
 
@@ -195,7 +237,6 @@ class Sheep {
       this.prms.prc(i),
       this.prms.sl(i));
 
-    //var a = 360*this.fear;
     var a = 25;
     var b = 45;
     if( !this.isAngleLessThen( this.forward(), desired, a) )
@@ -384,6 +425,8 @@ class Sheep {
 
     this.prms.sacc(this.prms.s, this.computeSepSteer(this.cs, this.prms.s));
 
+    this.prms.sacc(this.prms.b, this.computeSteerBounds(this.prms.b));
+
   }
 
   applyBehaviours() {
@@ -393,7 +436,7 @@ class Sheep {
     this.prms.step();
 
     this.prms.limitVel(this.prms.g, 1+this.fear);
-    
+
     this.prms.sgvel(
         this.constrainVelocityAngle(
             this.forward(),

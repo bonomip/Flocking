@@ -5,7 +5,7 @@ let vel;
 let wolf_w;
 let wolf_h;
 let low_b = 200*200;
-let high_b = 800*800;
+let high_b = 1000*1000;
 let cnv;
 let lmx = 0;
 let lmy = 0;
@@ -27,8 +27,6 @@ function windowResized() {
 }
 
 function reset(first){
-	if(!first)
-		console.log("------ RESIZE ---------");
 	var brd = border();
 	var ww = windowWidth-brd;
 	var wh = windowHeight-brd;
@@ -45,43 +43,35 @@ function reset(first){
 		pixels = low_b;
 	if(pixels > high_b)
 		pixels = high_b; 
-	console.log("Number of pixels "+pixels);
 	
 	scaling = map(pixels, low_b, high_b, 0, 1);
 	
 	vel = (10*scaling)+1.25;
 	wolf_w = (28*scaling)+2;
 	wolf_h = (38*scaling)+2;
-	console.log("wolf velocity "+vel);
-	console.log("Scaling factor "+scaling);
 
 	if(!first)
 		sheeps = [];
 
 	let c = ceil(scaling * 10)+3;
-	c = c > 10 ? 10 : c;
+	c = c > 11 ? 11 : c;
 	var size = 0.01+(0.09 * scaling);
 	let w = width/2;
 	let h = height/2;
 	var sheep_count = 0;
 	for(let i = 0; i < c; i++){
 		for(let j = 0; j < c; j++){
-			//if(i == 0 && j == 0)
-			//	sheeps.push(new Sheep((w/c * i) + w/2, (h/c *j) + h/2, size, random(0, 360), true, "red"));
-			//else
 				sheep_count++;
-				var i0 = c/2 + b();//i + b();
-				var j0 = c/2 + b();//j + b();
-				sheeps.push(new Sheep((w/c * i0) + w/2, (h/c *j0) + h/2, size, random(0, 360), false));
+				var i0 = c/2 + b();
+				var j0 = c/2 + b();
+				sheeps.push(new Sheep((w/c * i0) + w/2, (h/c *j0) + h/2, size, random(0, 360)));
 		}
 	}
 
+	//sheeps[0].setDebug(true);
+
 	lmx = 0;
 	lmy = 0;
-
-	console.log("Number of sheep "+sheep_count);
-	console.log("grid dimension "+c);
-	console.log("sheep size "+size);
 }
 
 function setup() {

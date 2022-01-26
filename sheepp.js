@@ -12,7 +12,6 @@ class SheepPrms{
     if(this.ff >= 30) //adult 
       this.ff = random(20, 75);
 
-
     // fear factor "m" pre computation
     this.ffpc2 = 1 / PI * 2 * (1 + this.ff * 0.002);
     this.ffpc1 = 1 / this.ff;
@@ -40,6 +39,7 @@ class SheepPrms{
     this.a = 2;
     this.c = 3;
     this.s = 4;
+    this.b = 5;
 
     //velocity
     this.avel = [
@@ -47,7 +47,8 @@ class SheepPrms{
                         createVector(0, 0),   // 1 flee velocity
                         createVector(0, 0),   // 2 align velocity
                         createVector(0, 0),   // 3 cohesion velocity
-                        createVector(0, 0)    // 4 separation velocity
+                        createVector(0, 0),    // 4 separation velocity
+                        createVector(0, 0)    // 5 avoid bounds velocity
                         ];
 
     //acceleration                    
@@ -56,7 +57,8 @@ class SheepPrms{
                           createVector(0, 0),   // 1 flee acceleration
                           createVector(0, 0),   // 2 align acceleration
                           createVector(0, 0),   // 3 cohesion acceleration
-                          createVector(0, 0)    // 4 separation acceleration
+                          createVector(0, 0),    // 4 separation acceleration
+                          createVector(0, 0)    // 5 avoid bounds velocity
                           ];
 
     //perceptions                      
@@ -66,7 +68,8 @@ class SheepPrms{
                           800*size,   // 2 align perception
                           800*size,   // 3 cohesion perception
                                       //used for squared squash as max
-                          200*size  // 4 separation perception
+                          200*size,  // 4 separation perception
+                          400*size // 5 bounds perception
                         ];
     
     this.asl = [
@@ -74,7 +77,8 @@ class SheepPrms{
                           6*size,   // 1 flee max speed
                           12*size,   // 2 align max speed
                           16*size,   // 3 cohesion max speed
-                          12*size   // 4 separation max speed
+                          12*size,   // 4 separation max speed
+                          50*size // 5 bound max speed
                         ];
 
     //speed threshold
@@ -84,7 +88,7 @@ class SheepPrms{
                               0.1*size,   // 2 align min speed
                               0.1*size,   // 3 cohesion min speed
                               0.1*size,  // 4 separation min speed
-                              0.1*size // collision min speed
+                              0.1*size // 5 bounds min speed
                                   ];
 
     //force limits
@@ -94,7 +98,7 @@ class SheepPrms{
                           2*size,   // 2 align max froce
                           2*size,   // 3 cohesion max froce
                           2*size,  // 4 separation max froce
-                          2*size // collision
+                          50*size // 5 bounds max force
                             ];
   }
 
@@ -122,10 +126,6 @@ class SheepPrms{
 
   vel(i){
     return this.avel[i].copy();
-  }
-
-  sprc(f){
-    
   }
 
   prc(i){
