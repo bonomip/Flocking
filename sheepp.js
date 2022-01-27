@@ -69,7 +69,7 @@ class SheepPrms{
                           800*size,   // 3 cohesion perception
                                       //used for squared squash as max
                           200*size,  // 4 separation perception
-                          400*size // 5 bounds perception
+                          1000*size // 5 bounds perception
                         ];
     
     this.asl = [
@@ -78,7 +78,7 @@ class SheepPrms{
                           12*size,   // 2 align max speed
                           16*size,   // 3 cohesion max speed
                           12*size,   // 4 separation max speed
-                          16*size // 5 bound max speed
+                          10*size // 5 bound max speed
                         ];
 
     //speed threshold
@@ -98,7 +98,7 @@ class SheepPrms{
                           2*size,   // 2 align max froce
                           2*size,   // 3 cohesion max froce
                           2*size,  // 4 separation max froce
-                          100*size // 5 bounds max force
+                          2*size // 5 bounds max force
                             ];
   }
 

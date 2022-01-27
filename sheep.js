@@ -36,6 +36,7 @@ class Sheep {
     
     this.collision_distance = this.w*0.9;
     this.fear = 0;
+    this.c_fear = 0;
 
     this.prms = new SheepPrms(size);
 
@@ -154,10 +155,10 @@ computeSteerBounds(i){
   var t = this.prms.prc(i);
 
   var d = [
-    width - this.pos.x,
-    this.pos.x,
-    this.pos.y,
-    height - this.pos.y
+    width - this.pos.x -this.w/2,
+    this.pos.x + this.w/2,
+    this.pos.y + this.w/2,
+    height - this.pos.y - this.w/2
   ];
   var v = [
     createVector(-1, 0),
@@ -167,13 +168,13 @@ computeSteerBounds(i){
   ];
 
   var desired = createVector(0,0);
-
   for(var j = 0; j < d.length; j++){
-    if(d[j] < t){
-      var m0 = fadeOut(d[j], t, 0, 0.4);
-      
-      desired.add( add(v[j].mult( m0 * 100 ), this.prms.gvel()));
-    }
+      if( ( d[j] < t ) && (this.forward().dot(v[j]) <= 0) ){
+        var m0 = negSquash(d[j], t, 0, 0.4);
+        if(m0 > 0.9)
+          this.fear = 1-m0;
+        desired.add( add( v[j].mult( m0 ), this.prms.gvel()));
+      }
   }
 
   desired.limit(this.prms.sl(i));
@@ -284,7 +285,7 @@ computeSteerBounds(i){
 
     desired.normalize();
 
-    desired.mult(m0*this.fear);
+    desired.mult(m0*this.c_fear);
     
     desired.limit(this.prms.sl(i));
 
@@ -413,6 +414,9 @@ computeSteerBounds(i){
     // removing from the list distant sheeps
 
     this.fear = this.computeFearFactor(this.prms.prc(this.prms.f), m);
+    this.c_fear = this.fear;
+
+    this.prms.sacc(this.prms.b, this.computeSteerBounds(this.prms.b));
 
     //passing v, m so i dont have to compute them twice ;)
     this.prms.sacc(this.prms.f, this.computeFleeSteer(v, m, this.prms.f));
@@ -425,8 +429,6 @@ computeSteerBounds(i){
 
     this.prms.sacc(this.prms.s, this.computeSepSteer(this.cs, this.prms.s));
 
-    this.prms.sacc(this.prms.b, this.computeSteerBounds(this.prms.b));
-
   }
 
   applyBehaviours() {
@@ -435,7 +437,7 @@ computeSteerBounds(i){
 
     this.prms.step();
 
-    var m = map(this.fear, 0, 1, 0.5, 1);
+    var m = map(this.c_fear, 0, 1, 0.5, 1);
 
     this.prms.limitVel(this.prms.g, m);
 
