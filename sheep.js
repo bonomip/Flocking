@@ -435,7 +435,9 @@ computeSteerBounds(i){
 
     this.prms.step();
 
-    this.prms.limitVel(this.prms.g, 1+this.fear);
+    var m = map(this.fear, 0, 1, 0.5, 1);
+
+    this.prms.limitVel(this.prms.g, m);
 
     this.prms.sgvel(
         this.constrainVelocityAngle(

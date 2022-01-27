@@ -73,12 +73,12 @@ class SheepPrms{
                         ];
     
     this.asl = [
-                          (17.5+(this.ff/100))*size,   // 0 global max speed;
+                          (20+(this.ff/100))*size,   // 0 global max speed;
                           6*size,   // 1 flee max speed
                           12*size,   // 2 align max speed
                           16*size,   // 3 cohesion max speed
                           12*size,   // 4 separation max speed
-                          50*size // 5 bound max speed
+                          16*size // 5 bound max speed
                         ];
 
     //speed threshold
@@ -98,7 +98,7 @@ class SheepPrms{
                           2*size,   // 2 align max froce
                           2*size,   // 3 cohesion max froce
                           2*size,  // 4 separation max froce
-                          50*size // 5 bounds max force
+                          100*size // 5 bounds max force
                             ];
   }
 
