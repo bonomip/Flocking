@@ -8,6 +8,8 @@ class Sheep {
     //by the collision algorithm
     this.cs = [];
 
+    this.where = random([0, 1]);
+
     //// TODO:  add mood for each sheep
     //to create diversity
     //the sheep is going to react based on the mood to different stimulus
@@ -37,6 +39,7 @@ class Sheep {
     this.collision_distance = this.w*0.9;
     this.fear = 0;
     this.c_fear = 0;
+    this.cc_fear = 0;
 
     this.prms = new SheepPrms(size);
 
@@ -157,8 +160,8 @@ computeSteerBounds(i){
   var d = [
     width - this.pos.x -this.w/2,
     this.pos.x + this.w/2,
-    this.pos.y + this.w/2,
-    height - this.pos.y - this.w/2
+    this.pos.y + this.h/2,
+    height - this.pos.y - this.h/2
   ];
   var v = [
     createVector(-1, 0),
@@ -169,12 +172,31 @@ computeSteerBounds(i){
 
   var desired = createVector(0,0);
   for(var j = 0; j < d.length; j++){
+     
+
       if( ( d[j] < t ) && (this.forward().dot(v[j]) <= 0) ){
+        var w;
+
+        if( this.forward().dot(v[j]) < -0.9){
+          if(this.where == 1){
+            w = createVector(v[j].y, v[j].x);
+          }else{
+            w = createVector(-v[j].y, -v[j].x);
+          }
+        } else {
+          w = v[j];
+        }
+
         var m0 = negSquash(d[j], t, 0, 0.4);
-        if(m0 > 0.9)
+        if(m0 > 0.9){
           this.fear = 1-m0;
+          this.cc_fear = 0.2;
+        }
         desired.add( add( v[j].mult( m0 ), this.prms.gvel()));
+
       }
+
+
   }
 
   desired.limit(this.prms.sl(i));
@@ -223,8 +245,9 @@ computeSteerBounds(i){
     desired.div(count);
 
     var m0 = fadeOut(desired.mag(), prc, this.prms.sdt, this.prms.fosp);
-
-    desired.mult(m0*(1-this.fear));
+    
+    var m1 = 1-this.fear < 0.1 ? 0.1 : 1-this.fear;
+    desired.mult(m0*m1);
 
     desired.limit(ms);
 
@@ -285,7 +308,7 @@ computeSteerBounds(i){
 
     desired.normalize();
 
-    desired.mult(m0*this.c_fear);
+    desired.mult(m0*this.cc_fear);
     
     desired.limit(this.prms.sl(i));
 
@@ -415,6 +438,7 @@ computeSteerBounds(i){
 
     this.fear = this.computeFearFactor(this.prms.prc(this.prms.f), m);
     this.c_fear = this.fear;
+    this.cc_fear = this.fear;
 
     this.prms.sacc(this.prms.b, this.computeSteerBounds(this.prms.b));
 
