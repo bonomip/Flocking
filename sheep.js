@@ -164,9 +164,15 @@ rayTrace(p0, n, l0, l, thresh){
   return t >= 0 && t < thresh ? negSquash(t, thresh, 0, 0.4 ) : -1;
 }
 
-static corner_trap_idx = 0;
-static corner_trap_frame_count = 0;
-static corner_trap_frame_start = 100;
+compare( a, b ) {
+  if ( a[0] < b[0] ){
+    return -1;
+  }
+  if ( a[0] > b[0] ){
+    return 1;
+  }
+  return 0;
+}
 
 computeSteerBounds(index){
   var p0 = [
@@ -197,45 +203,31 @@ computeSteerBounds(index){
 
   var desired = createVector(0,0);
 
-  if(Sheep.corner_trap_frame_count > 0){ //we are in corner trap
-      Sheep.corner_trap_frame_count--;
-      var BreakException = {};
-      console.log("corner trqaap");
-      try{
-      p0.forEach((p, i) => {
-          var m0 = this.rayTrace(p, n[i], this.pos, ray[Sheep.corner_trap_idx], prc[Sheep.corner_trap_idx]);
-          if(m0 >= 0){
-            if(m0 > 0.9){
-              this.fear = 1-m0;
-              this.cc_fear = 0.2;
-            }
-            var v = ray[Sheep.corner_trap_idx].copy();
-            desired.add( v.reflect(n[i]).mult(m0));
-            console.log("corner trap: " + n[i] + " -- " + Sheep.corner_trap_idx);
-            throw BreakException;
-          }
-      });
-    } catch (e) { if (e !== BreakException) throw e; }
-  } else {
-    var corner_trap = 0;
-    p0.forEach((p, i) => {
-      ray.forEach((r, j) => {
-        var m0 = this.rayTrace(p, n[i], this.pos, r, prc[j]);
-        if(m0 >= 0){
-          corner_trap++;
-          if(m0 > 0.9){
-            this.fear = 1-m0;
-            this.cc_fear = 0.2;
-          }
-          var v = r.copy();
-          desired.add( v.reflect(n[i]).mult(m0));
-        }
-      });
+  var intersections = [];
+
+  p0.forEach((p, i) => {
+    ray.forEach((r, j) => {
+      var m0 = this.rayTrace(p, n[i], this.pos, r, prc[j]);
+      if(m0 > 0)
+        intersections.push([m0, r, n[i]]);
     });
-  }
-  if(corner_trap > 3 && Sheep.corner_trap_frame_count == 0){
-    Sheep.corner_trap_frame_count = Sheep.corner_trap_frame_start;
-    Sheep.corner_trap_idx = 0;
+  });
+
+  if(intersections.length > 0){
+    intersections.sort( this.compare );
+    var plane = intersections[0][2];
+    var to_compute = [];
+    intersections.forEach((inter)=>{if(inter[2]==plane)to_compute.push(inter)});
+    to_compute.sort(this.compare);
+    to_compute.reverse();
+    to_compute.forEach((res)=>{
+      if(res[0] > 0.9){
+        this.fear = 1-res[0];
+        this.cc_fear = 0.2;
+      }  
+      var v = res[1].copy();
+      desired.add( v.reflect(res[2]).mult(res[0]));
+    });
   }
 
   desired.limit(this.prms.sl(index));
