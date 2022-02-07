@@ -42,7 +42,7 @@ class Sheep {
     this.cc_fear = 0;
 
     this.prms = new SheepPrms(size);
-
+    
     //sheep's color
     this.color = color;
 
@@ -61,6 +61,10 @@ class Sheep {
 
   forward(){
     return createVector(1, 0).rotate(this.rotation);
+  }
+
+  sideW(i){
+    return createVector(1, 0).rotate(this.rotation+(10*i));
   }
 
   setWolf(x, y){
@@ -153,57 +157,92 @@ class Sheep {
 
 ////////////////////////// BOUNDS /////////////////////////////////////////////
 
+rayTrace(p0, n, l0, l, thresh){
+  var d = sub(p0, l0);
+  var t = dot( d, n ) / dot(l, n);
+  
+  return t >= 0 && t < thresh ? negSquash(t, thresh, 0, 0.4 ) : -1;
+}
 
-computeSteerBounds(i){
-  var t = this.prms.prc(i);
+static corner_trap_idx = 0;
+static corner_trap_frame_count = 0;
+static corner_trap_frame_start = 100;
 
-  var d = [
-    width - this.pos.x -this.w/2,
-    this.pos.x + this.w/2,
-    this.pos.y + this.h/2,
-    height - this.pos.y - this.h/2
+computeSteerBounds(index){
+  var p0 = [
+    createVector( width - this.w/2, 0 ),
+    createVector( this.w/2, 0 ),
+    createVector( 0, this.h/2 ), 
+    createVector( 0, height - this.h/2 )
   ];
-  var v = [
+
+  var n = [
     createVector(-1, 0),
     createVector(1, 0),
     createVector(0, 1),
     createVector(0, -1)
   ];
 
+  var ray = [
+    this.forward(),
+    this.sideW(1),
+    this.sideW(-1)
+  ];
+
+  var prc = [
+    this.prms.prc(index),
+    this.prms.prc(index) * 0.3,
+    this.prms.prc(index) * 0.3
+  ]
+
   var desired = createVector(0,0);
-  for(var j = 0; j < d.length; j++){
-     
 
-      if( ( d[j] < t ) && (this.forward().dot(v[j]) <= 0) ){
-        var w;
-
-        if( this.forward().dot(v[j]) < -0.9){
-          if(this.where == 1){
-            w = createVector(v[j].y, v[j].x);
-          }else{
-            w = createVector(-v[j].y, -v[j].x);
+  if(Sheep.corner_trap_frame_count > 0){ //we are in corner trap
+      Sheep.corner_trap_frame_count--;
+      var BreakException = {};
+      console.log("corner trqaap");
+      try{
+      p0.forEach((p, i) => {
+          var m0 = this.rayTrace(p, n[i], this.pos, ray[Sheep.corner_trap_idx], prc[Sheep.corner_trap_idx]);
+          if(m0 >= 0){
+            if(m0 > 0.9){
+              this.fear = 1-m0;
+              this.cc_fear = 0.2;
+            }
+            var v = ray[Sheep.corner_trap_idx].copy();
+            desired.add( v.reflect(n[i]).mult(m0));
+            console.log("corner trap: " + n[i] + " -- " + Sheep.corner_trap_idx);
+            throw BreakException;
           }
-        } else {
-          w = v[j];
+      });
+    } catch (e) { if (e !== BreakException) throw e; }
+  } else {
+    var corner_trap = 0;
+    p0.forEach((p, i) => {
+      ray.forEach((r, j) => {
+        var m0 = this.rayTrace(p, n[i], this.pos, r, prc[j]);
+        if(m0 >= 0){
+          corner_trap++;
+          if(m0 > 0.9){
+            this.fear = 1-m0;
+            this.cc_fear = 0.2;
+          }
+          var v = r.copy();
+          desired.add( v.reflect(n[i]).mult(m0));
         }
-
-        var m0 = negSquash(d[j], t, 0, 0.4);
-        if(m0 > 0.9){
-          this.fear = 1-m0;
-          this.cc_fear = 0.2;
-        }
-        desired.add( add( v[j].mult( m0 ), this.prms.gvel()));
-
-      }
-
-
+      });
+    });
+  }
+  if(corner_trap > 3 && Sheep.corner_trap_frame_count == 0){
+    Sheep.corner_trap_frame_count = Sheep.corner_trap_frame_start;
+    Sheep.corner_trap_idx = 0;
   }
 
-  desired.limit(this.prms.sl(i));
+  desired.limit(this.prms.sl(index));
 
-  var steer = sub(desired, this.prms.vel(i));
+  var steer = sub(desired, this.prms.vel(index));
 
-  steer.limit(this.prms.fl(i));
+  steer.limit(this.prms.fl(index));
 
   return steer;
  }

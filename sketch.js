@@ -55,6 +55,7 @@ function reset(first){
 
 	let c = ceil(scaling * 10)+3;
 	c = c > 11 ? 11 : c;
+	c = 10;
 	var size = 0.01+(0.09 * scaling);
 	let w = width/2;
 	let h = height/2;
@@ -102,13 +103,13 @@ function draw() {
 		p3 = p2;
 	}
 
-	sheeps.forEach((item, i) => {
+	sheeps.forEach((item) => {
 		item.draw()
 		item.setWolf(lmx, lmy);
 		item.computeBehaviours(sheeps);
 	});
 
-	sheeps.forEach((item, i) => {
+	sheeps.forEach((item) => {
 		item.applyBehaviours();
 		item.bounds();
 	});
